@@ -14,17 +14,19 @@ import {
   Toolbar,
   Typography,
   Button,
-  
+  Stack
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   Home as HomeIcon,
   Assignment as ExamIcon,
-  
   Logout as LogoutIcon,
-   Assignment as AssignmentIcon,
+  Assignment as AssignmentIcon,
   Person as PersonIcon,
   PersonOutline as ProfileIcon,
+  Group as GroupIcon,
+  AddBox as AddBoxIcon,
+  CheckCircle as CheckCircleIcon
 } from "@mui/icons-material";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -47,48 +49,78 @@ export default function DashboardLayout() {
       </Toolbar>
       <Divider />
       <List>
-  
-  <ListItem disablePadding>
-    <ListItemButton component={Link} to="/dashboard">
-      <ListItemIcon><HomeIcon /></ListItemIcon>
-      <ListItemText primary="Home" />
-    </ListItemButton>
-  </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton component={Link} to="/dashboard">
+            <ListItemIcon><HomeIcon /></ListItemIcon>
+            <ListItemText primary="Home" />
+          </ListItemButton>
+        </ListItem>
 
-  {auth?.user?.role === "admin" && (
-    <>
-      <ListItem disablePadding>
-        <ListItemButton component={Link} to="/dashboard/teachers">
-          <ListItemIcon><PersonIcon /></ListItemIcon>
-          <ListItemText primary="All Teachers" />
-        </ListItemButton>
-      </ListItem>
+        {auth?.user?.role === "admin" && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/teachers">
+                <ListItemIcon><PersonIcon /></ListItemIcon>
+                <ListItemText primary="All Teachers" />
+              </ListItemButton>
+            </ListItem>
 
-      <ListItem disablePadding>
-        <ListItemButton component={Link} to="/dashboard/students">
-          <ListItemIcon><PersonIcon /></ListItemIcon>
-          <ListItemText primary="All Students" />
-        </ListItemButton>
-      </ListItem>
+            <ListItem disablePadding>
+             <ListItemButton component={Link} to="/dashboard/mystudents">
+  <ListItemIcon><PersonIcon /></ListItemIcon>
+  <ListItemText primary="My Students" />
+</ListItemButton>
 
-      <ListItem disablePadding>
-        <ListItemButton component={Link} to="/dashboard/exams">
-          <ListItemIcon><AssignmentIcon /></ListItemIcon>
-          <ListItemText primary="Exams" />
-        </ListItemButton>
-      </ListItem>
-    </>
-  )}
+            </ListItem>
 
-  {/* Shared pages (e.g. profile) */}
-  <ListItem disablePadding>
-    <ListItemButton component={Link} to="/dashboard/profile">
-      <ListItemIcon><ProfileIcon /></ListItemIcon>
-      <ListItemText primary="Profile" />
-    </ListItemButton>
-  </ListItem>
-</List>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/exams">
+                <ListItemIcon><AssignmentIcon /></ListItemIcon>
+                <ListItemText primary="Exams" />
+              </ListItemButton>
+            </ListItem>
+          </>
+        )}
 
+        {auth?.user?.role === "teacher" && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/teacher/profile">
+                <ListItemIcon><ProfileIcon /></ListItemIcon>
+                <ListItemText primary="My Profile" />
+              </ListItemButton>
+            </ListItem>
+
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/mystudents">
+                <ListItemIcon><GroupIcon /></ListItemIcon>
+                <ListItemText primary="My Students" />
+              </ListItemButton>
+            </ListItem>
+
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/teacher/exams">
+                <ListItemIcon><CheckCircleIcon /></ListItemIcon>
+                <ListItemText primary="All Exams" />
+              </ListItemButton>
+            </ListItem>
+
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/teacher/create-exam">
+                <ListItemIcon><AddBoxIcon /></ListItemIcon>
+                <ListItemText primary="Create Exam" />
+              </ListItemButton>
+            </ListItem>
+          </>
+        )}
+
+        <ListItem disablePadding>
+          <ListItemButton component={Link} to="/dashboard/profile">
+            <ListItemIcon><ProfileIcon /></ListItemIcon>
+            <ListItemText primary="Profile" />
+          </ListItemButton>
+        </ListItem>
+      </List>
     </div>
   );
 

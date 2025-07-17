@@ -1,6 +1,12 @@
 import { RouterProvider } from "react-router-dom";
 import router from "./routes/AppRouter";
+import { Toaster } from "react-hot-toast";
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <Toaster position="top-center" reverseOrder={false} />
+      <RouterProvider router={router} />
+    </>
+  );
 }

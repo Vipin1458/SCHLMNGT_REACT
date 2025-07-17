@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import {
   Container, Typography, CircularProgress, Alert, Button, Table, TableHead,
   TableRow, TableCell, TableBody, Modal, Box, Dialog, DialogTitle, DialogContent,
-  DialogActions
+  DialogActions, Stack
 } from "@mui/material";
 import axiosPrivate from "../api/axiosPrivate";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import StudentTable from "../components/StudentTable";
+
 
 const modalStyle = {
   position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -47,19 +50,50 @@ export default function AllStudentsPage() {
     }
   };
 
+ const handleExport = async () => {
+  try {
+    const res = await axiosPrivate.get("/export/students", {
+      responseType: "blob",
+    });
+    const blob = new Blob([res.data], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "students.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Exported Successfully");
+  } catch (err) {
+    toast.error("Failed to export students.");
+    console.error(err);
+  }
+};
+
+
   if (loading) return <CircularProgress sx={{ mt: 4 }} />;
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
     <Container>
       <Typography variant="h5" gutterBottom>All Students</Typography>
-      <Button
-        variant="contained"
-        sx={{ mb: 2 }}
-        onClick={() => navigate("/dashboard/students/register")}
-      >
-        Register Student
-      </Button>
+
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+        <Button
+          variant="contained"
+          onClick={() => navigate("/dashboard/students/register")}
+        >
+          Register Student
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleExport}
+        >
+          Export Students
+        </Button>
+      </Stack>
 
       <Table>
         <TableHead>

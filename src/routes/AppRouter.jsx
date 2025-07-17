@@ -8,6 +8,9 @@ import AllTeachersPage from "../pages/AllTeachersPage";
 import AllStudentsPage from "../pages/AllStudentsPage";
 import AllExamsPage from "../pages/AllExamsPage";
 import EditTeacherPage from "../pages/EditTeacherPage";
+import RegisterStudentPage from "../pages/RegisterStudentPage";
+import RegisterTeacherPage from "../pages/RegisterTeacherPage";
+import MyStudentsPage from "../pages/MyStudentsPage";
 
 
 const ProtectedRoute = ({ children }) => {
@@ -41,7 +44,20 @@ const router = createBrowserRouter([
   {
   path: "teachers/edit/:id",
   element: <EditTeacherPage />
-}
+},{
+  path: "/dashboard/students/register",
+  element: <RegisterStudentPage />,
+},
+{
+  path: "/dashboard/teachers/register",
+  element: <RegisterTeacherPage />,
+},
+ {
+    path: "/dashboard/mystudents",
+    element: <MyStudentsPage />,
+  },
+  { path: "/dashboard/teacher/students", element: <Navigate to="/dashboard/mystudents" /> },
+
 
 
      
