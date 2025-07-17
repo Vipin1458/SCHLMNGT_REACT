@@ -4,6 +4,10 @@ import DashboardLayout from "../components/DashboardLayout";
 import DashboardHome from "../components/DashboardHome";
 import { useAuth } from "../context/AuthContext";
 import ProfilePage from "../pages/ProfilePage";
+import AllTeachersPage from "../pages/AllTeachersPage";
+import AllStudentsPage from "../pages/AllStudentsPage";
+import AllExamsPage from "../pages/AllExamsPage";
+import EditTeacherPage from "../pages/EditTeacherPage";
 
 
 const ProtectedRoute = ({ children }) => {
@@ -28,20 +32,19 @@ const router = createBrowserRouter([
   path: "profile",
   element: <ProfilePage />,
   
-},{
-  path: "teachers",
-  element: <div>All Teachers (Admin only)</div>,
 },
-{
-  path: "students",
-  element: <div>All Students (Admin only)</div>,
-},
-{
-  path: "exams",
-  element: <div>All Exams (Admin)</div>,
+{ path: "", element: <DashboardHome /> },
+  { path: "profile", element: <ProfilePage /> },
+  { path: "teachers", element: <AllTeachersPage /> },
+  { path: "students", element: <AllStudentsPage /> },
+  { path: "exams", element: <AllExamsPage /> },
+  {
+  path: "teachers/edit/:id",
+  element: <EditTeacherPage />
 }
 
-      // more nested routes go here
+
+     
     ],
   },
 ]);
