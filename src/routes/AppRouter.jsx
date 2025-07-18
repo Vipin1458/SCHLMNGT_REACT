@@ -11,6 +11,11 @@ import EditTeacherPage from "../pages/EditTeacherPage";
 import RegisterStudentPage from "../pages/RegisterStudentPage";
 import RegisterTeacherPage from "../pages/RegisterTeacherPage";
 import MyStudentsPage from "../pages/MyStudentsPage";
+import TeacherExamsPage from "../pages/TeacherExamsPage";
+import CreateExamForm from "../components/CreateExamForm";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
+
 
 
 const ProtectedRoute = ({ children }) => {
@@ -21,7 +26,8 @@ const ProtectedRoute = ({ children }) => {
 const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" /> },
   { path: "/login", element: <LoginForm /> },
-//   { path: "/register", element: <RegisterPage /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/reset/:uidb64/:token", element: <ResetPassword /> },
   {
     path: "/dashboard",
     element: (
@@ -57,10 +63,15 @@ const router = createBrowserRouter([
     element: <MyStudentsPage />,
   },
   { path: "/dashboard/teacher/students", element: <Navigate to="/dashboard/mystudents" /> },
-
-
-
-     
+ {
+  path: "/dashboard/teacher/exams",
+  element: <TeacherExamsPage />
+},
+{
+  path: "/dashboard/exams/create",
+  element: <CreateExamForm />,
+}
+  
     ],
   },
 ]);

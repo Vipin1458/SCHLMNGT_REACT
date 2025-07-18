@@ -17,7 +17,9 @@ export default function MyStudentsPage() {
     const fetchMyStudents = async () => {
       try {
         const res = await axiosPrivate.get("/mystudents/");
-        setMyStudents(res.data);
+        setMyStudents(res.data.results);
+        console.log('MyStudents',myStudents);
+        
       } catch (err) {
         setError("Failed to load students.");
       } finally {

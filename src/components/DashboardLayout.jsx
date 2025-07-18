@@ -66,9 +66,9 @@ export default function DashboardLayout() {
             </ListItem>
 
             <ListItem disablePadding>
-             <ListItemButton component={Link} to="/dashboard/mystudents">
+             <ListItemButton component={Link} to="/dashboard/students">
   <ListItemIcon><PersonIcon /></ListItemIcon>
-  <ListItemText primary="My Students" />
+  <ListItemText primary="All Students" />
 </ListItemButton>
 
             </ListItem>
@@ -106,7 +106,7 @@ export default function DashboardLayout() {
             </ListItem>
 
             <ListItem disablePadding>
-              <ListItemButton component={Link} to="/dashboard/teacher/create-exam">
+              <ListItemButton component={Link} to="/dashboard/exams/create">
                 <ListItemIcon><AddBoxIcon /></ListItemIcon>
                 <ListItemText primary="Create Exam" />
               </ListItemButton>

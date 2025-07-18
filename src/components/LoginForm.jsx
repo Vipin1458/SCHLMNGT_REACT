@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
+
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   Box,
@@ -77,6 +78,7 @@ export default function LoginForm() {
           </Button>
         </Box>
       </Paper>
+      <Link to="/forgot-password">Forgot Password?</Link>
     </Container>
   );
 }

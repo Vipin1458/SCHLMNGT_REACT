@@ -25,7 +25,7 @@ export default function AllTeachersPage() {
     try {
       const res = await axiosPrivate.get(`/teachers/?page=${page}`);
       setTeachers(res.data.results || []);
-      setCount(Math.ceil(res.data.count / 10)); // assuming 10 per page
+      setCount(Math.ceil(res.data.count / 10));
     } catch (err) {
       setError("Failed to load teachers.");
     } finally {

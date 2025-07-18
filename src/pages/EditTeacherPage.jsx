@@ -20,18 +20,19 @@ export default function EditTeacherPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch teacher by ID
+ 
   useEffect(() => {
     const fetchTeacher = async () => {
       try {
         const res = await axiosPrivate.get(`/teachers/${id}/`);
         const t = res.data;
         setFormData({
-          username: t.user.username,
-          email: t.user.email,
-          phone_number: t.phone_number,
-          subject_specialization: t.subject_specialization,
-        });
+  username: t.user.username || "",
+  email: t.user.email || "",
+  phone_number: t.phone_number || "",
+  subject_specialization: t.subject_specialization || "",
+});
+
       } catch (err) {
         setError("Failed to fetch teacher.");
       } finally {
@@ -46,29 +47,43 @@ export default function EditTeacherPage() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   setSaving(true);
   setError("");
 
+  const payload = {
+    user: {
+      username: formData.username,
+      email: formData.email,
+      role: "teacher", // optional, if backend infers this
+    },
+    phone_number: formData.phone_number,
+    subject_specialization: formData.subject_specialization,
+  };
+
+  console.log("Submitting:", payload);
+
   try {
-    await axiosPrivate.patch(`/teachers/${id}/`, {
-      user: {
-        username: formData.username,
-        email: formData.email,
-         role: "teacher",
-      },
-      phone_number: formData.phone_number,
-      subject_specialization: formData.subject_specialization,
+    await axiosPrivate.patch(`/teachers/${id}/`, payload, {
+      headers: { "Content-Type": "application/json" },
     });
 
     navigate("/dashboard/teachers");
-  } catch (err) {
+ } catch (err) {
+  const responseData = err.response?.data;
+  if (responseData?.user?.username) {
+    setError(responseData.user.username[0]); // show just the first message
+  } else {
     setError("Failed to update teacher.");
-  } finally {
+  }
+}
+
+ finally {
     setSaving(false);
   }
 };
+
 
   if (loading) return <CircularProgress sx={{ mt: 4 }} />;
 
