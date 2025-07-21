@@ -1,75 +1,123 @@
-
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import {
   Container,
   Typography,
   TextField,
   Button,
   Alert,
+  Paper,
+  CircularProgress,
   Box,
 } from "@mui/material";
-import axios from "axios";
+import { useForm } from "react-hook-form";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import axiosPrivate from "../api/axiosPrivate";
 
-export default function ResetPassword() {
-  const { uidb64, token } = useParams();
+const ResetPasswordPage = () => {
+  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const [password, setPassword] = useState("");
-  const [password2, setPassword2] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [searchParams] = useSearchParams();
+  const uid = searchParams.get("uid");
+  const token = searchParams.get("token");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
+    setLoading(true);
     setError("");
-    setSuccess("");
-
-    if (password !== password2) {
-      setError("Passwords do not match.");
-      return;
-    }
+    setMessage("");
 
     try {
-      await axios.post(`/reset/${uidb64}/${token}/`, {
-        new_password1: password,
-        new_password2: password2,
+      await axiosPrivate.post("/api/password-reset/confirm", {
+        uid,
+        token,
+        new_password: data.new_password,
       });
-      setSuccess("Password reset successful. You can now log in.");
-      setTimeout(() => navigate("/login"), 2000);
+
+      setMessage("Password has been reset successfully. You can now log in.");
     } catch (err) {
-      setError("Invalid or expired token. Please request a new reset link.");
+  console.error("Reset error:", err.response?.data); 
+  setError(
+    err?.response?.data?.non_field_errors?.[0] ||
+    err?.response?.data?.new_password?.[0] ||
+    err?.response?.data?.token?.[0] ||
+    "Reset link is invalid or expired. Please request a new one."
+  );
+}finally {
+      setLoading(false);
     }
+  };
+
+  const handleBackToLogin = () => {
+    navigate("/login")
   };
 
   return (
     <Container maxWidth="sm">
-      <Typography variant="h5" mt={4} mb={2}>
-        Set New Password
-      </Typography>
-
-      {error && <Alert severity="error">{error}</Alert>}
-      {success && <Alert severity="success">{success}</Alert>}
-
-      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-        <TextField
-          label="New Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <TextField
-          label="Confirm New Password"
-          type="password"
-          value={password2}
-          onChange={(e) => setPassword2(e.target.value)}
-          required
-        />
-        <Button variant="contained" type="submit">
+      <Paper elevation={3} sx={{ mt: 10, p: 4, borderRadius: 2 }}>
+        <Typography variant="h5" gutterBottom align="center">
           Reset Password
-        </Button>
-      </Box>
+        </Typography>
+
+        {message && <Alert severity="success" sx={{ my: 2 }}>{message}</Alert>}
+        {error && <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>}
+
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
+          <TextField
+            fullWidth
+            label="New Password"
+            type="password"
+            margin="normal"
+            {...register("new_password", { required: "New password is required" })}
+            error={!!errors.new_password}
+            helperText={errors.new_password?.message}
+          />
+
+          <TextField
+            fullWidth
+            label="Confirm New Password"
+            type="password"
+            margin="normal"
+            {...register("confirm_password", {
+              required: "Please confirm your password",
+              validate: value =>
+                value === watch("new_password") || "Passwords do not match",
+            })}
+            error={!!errors.confirm_password}
+            helperText={errors.confirm_password?.message}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 2 }}
+            disabled={loading}
+          >
+            {loading ? (
+              <CircularProgress size={24} color="inherit" /> 
+            ) : (
+
+             "Reset Password"
+            )}
+          </Button>
+        </Box>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            color="primary"
+            sx={{ mt: 2 }}
+            onClick={handleBackToLogin}
+          >
+            Back to Login
+          </Button>
+
+      </Paper>
     </Container>
   );
-}
+};
+
+export default ResetPasswordPage;

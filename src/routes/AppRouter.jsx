@@ -15,6 +15,8 @@ import TeacherExamsPage from "../pages/TeacherExamsPage";
 import CreateExamForm from "../components/CreateExamForm";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
+import ResetPasswordPage from "../pages/ResetPassword";
+import ForgotPasswordPage from "../pages/ForgotPassword";
 
 
 
@@ -26,8 +28,8 @@ const ProtectedRoute = ({ children }) => {
 const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" /> },
   { path: "/login", element: <LoginForm /> },
-  { path: "/forgot-password", element: <ForgotPassword /> },
-  { path: "/reset/:uidb64/:token", element: <ResetPassword /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
   {
     path: "/dashboard",
     element: (

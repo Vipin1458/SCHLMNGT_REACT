@@ -56,7 +56,7 @@ const handleSubmit = async (e) => {
     user: {
       username: formData.username,
       email: formData.email,
-      role: "teacher", // optional, if backend infers this
+      role: "teacher", 
     },
     phone_number: formData.phone_number,
     subject_specialization: formData.subject_specialization,
@@ -73,7 +73,7 @@ const handleSubmit = async (e) => {
  } catch (err) {
   const responseData = err.response?.data;
   if (responseData?.user?.username) {
-    setError(responseData.user.username[0]); // show just the first message
+    setError(responseData.user.username[0]); 
   } else {
     setError("Failed to update teacher.");
   }

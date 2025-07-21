@@ -17,7 +17,7 @@ export default function TeacherExamsPage() {
     const fetchExams = async () => {
       try {
         const res = await axiosPrivate.get("/exams/");
-        setExams(res.data.results || res.data);  // for pagination and non-paginated support
+        setExams(res.data.results || res.data);  
       } catch (err) {
         console.error(err);
         setError("Failed to fetch exams");

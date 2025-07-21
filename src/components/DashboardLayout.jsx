@@ -113,13 +113,6 @@ export default function DashboardLayout() {
             </ListItem>
           </>
         )}
-
-        <ListItem disablePadding>
-          <ListItemButton component={Link} to="/dashboard/profile">
-            <ListItemIcon><ProfileIcon /></ListItemIcon>
-            <ListItemText primary="Profile" />
-          </ListItemButton>
-        </ListItem>
       </List>
     </div>
   );

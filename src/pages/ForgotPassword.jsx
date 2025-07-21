@@ -1,42 +1,87 @@
-import { useState } from "react";
-import { TextField, Button, Container, Typography, Alert, Box } from "@mui/material";
-import axios from "axios";
+import React, { useState } from "react";
+import {
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Paper,
+  CircularProgress,
+  Box,
+} from "@mui/material";
+import { useForm } from "react-hook-form";
 import axiosPrivate from "../api/axiosPrivate";
+import { useNavigate } from "react-router-dom";
 
-export default function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [success, setSuccess] = useState("");
+const ForgotPasswordPage = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleBackToLogin = () => {
+    navigate("/login")
+  };
+
+  const onSubmit = async (data) => {
+    setLoading(true);
     setError("");
-    setSuccess("");
+    setMessage("");
 
     try {
-      const res = await axiosPrivate.post("/api/password-reset/", { email });
-      setSuccess(res.data.message);
+      await axiosPrivate.post("/api/password-reset", { email: data.email });
+      setMessage("If the email exists, a reset link has been sent.");
     } catch (err) {
-      setError(err.response?.data?.error || "Something went wrong");
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Container maxWidth="sm">
-      <Typography variant="h5" gutterBottom>Forgot Password</Typography>
-      {error && <Alert severity="error">{error}</Alert>}
-      {success && <Alert severity="success">{success}</Alert>}
+      <Paper elevation={3} sx={{ mt: 10, p: 4, borderRadius: 2 }}>
+        <Typography variant="h5" gutterBottom align="center">
+          Forgot Password
+        </Typography>
 
-      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-        <TextField
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Button variant="contained" type="submit">Send Reset Link</Button>
-      </Box>
+        {message && <Alert severity="success" sx={{ my: 2 }}>{message}</Alert>}
+        {error && <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>}
+
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
+          <TextField
+            fullWidth
+            label="Email Address"
+            margin="normal"
+            {...register("email", { required: "Email is required" })}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 2 }}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Send Reset Link"}
+          </Button>
+        </Box>
+        <Button
+            fullWidth
+            variant="outlined"
+            color="primary"
+            sx={{ mt: 2 }}
+            onClick={handleBackToLogin}
+          >
+            Back to Login
+          </Button>
+      </Paper>
     </Container>
   );
-}
+};
+
+export default ForgotPasswordPage;
+

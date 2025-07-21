@@ -20,7 +20,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const res = await axiosPrivate.get("/students/");
-        setProfile(res.data[0]); // assuming /students/ returns a list with only this user
+        setProfile(res.data[0]);
       } catch (err) {
         setError("Could not load profile.");
       } finally {
