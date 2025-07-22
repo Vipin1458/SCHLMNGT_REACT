@@ -75,7 +75,11 @@ const router = createBrowserRouter([
 },
 {
   path: "/dashboard/teachers/register",
-  element: <RegisterTeacherPage />,
+  element: <RegisterTeacherPage />,                                  
+},
+{
+  path: "/dashboard/teacher/profile",
+  element: <ProfilePage  />,                                  
 },
  {
     path: "/dashboard/mystudents",

@@ -151,9 +151,10 @@ const fetchStudentMarks = async (studentId) => {
       };
 
       await axiosPrivate.patch(`/students/${selectedStudent.id}/`, updateData);
-      showSnackbar('Student updated successfully', 'success');
+       fetchStudents();
       setEditOpen(false);
-      fetchStudents();
+      showSnackbar('Student updated successfully', 'success');
+     
     } catch (error) {
       console.error('Error updating student:', error);
       showSnackbar('Error updating student', 'error');

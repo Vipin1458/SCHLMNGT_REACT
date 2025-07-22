@@ -30,7 +30,7 @@ const ResetPasswordPage = () => {
     setMessage("");
 
     try {
-      await axiosPrivate.post("/api/password-reset/confirm", {
+      await axiosPrivate.post("/password-reset/confirm/", {
         uid,
         token,
         new_password: data.new_password,

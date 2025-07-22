@@ -30,7 +30,7 @@ const ForgotPasswordPage = () => {
     setMessage("");
 
     try {
-      await axiosPrivate.post("/api/password-reset", { email: data.email });
+      await axiosPrivate.post("/api/password-reset/", { email: data.email });
       setMessage("If the email exists, a reset link has been sent.");
     } catch (err) {
       setError("Something went wrong. Please try again.");
