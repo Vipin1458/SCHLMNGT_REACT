@@ -9,8 +9,9 @@ import {
   Quiz, Timer, CheckCircle, Cancel, School,
   Assignment, Person, Subject
 } from "@mui/icons-material";
-import axiosPrivate from "../utils/axiosPrivate";
+import axiosPrivate from "../api/axiosPrivate";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function AttendExam() {
   const { examId } = useParams();
@@ -24,7 +25,7 @@ export default function AttendExam() {
   const [error, setError] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30 * 60); 
+  const [timeLeft, setTimeLeft] = useState(30 * 60);
   const [examStarted, setExamStarted] = useState(false);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function AttendExam() {
       setExam(examRes.data);
       setQuestions(questionsRes.data);
       
+    
       const initialAnswers = {};
       questionsRes.data.forEach(q => {
         initialAnswers[q.id] = "";
@@ -104,8 +106,9 @@ export default function AttendExam() {
 
       const response = await axiosPrivate.post(`/exams/${examId}/attend/`, submissionData);
       
-      alert(`Exam submitted successfully! You scored ${response.data.marks}/${response.data.total}`);
-      navigate("/dashboard/exams");
+      
+      toast.success(`Exam submitted successfully! You scored ${response.data.marks}/${response.data.total}`);
+      navigate("/dashboard/student/MyExams");
       
     } catch (err) {
       console.error('Submission error:', err);
@@ -276,6 +279,7 @@ export default function AttendExam() {
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f7fa', py: 2 }}>
       <Container maxWidth="md">
+        {/* Header with Timer and Progress */}
         <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h5" fontWeight="bold" color="primary">
@@ -307,6 +311,7 @@ export default function AttendExam() {
           </Box>
         </Paper>
 
+        {/* Question Card */}
         <Paper elevation={0} sx={{ borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
           <Box sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -365,6 +370,7 @@ export default function AttendExam() {
               ))}
             </RadioGroup>
 
+            {/* Navigation Buttons */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
               <Button
                 variant="outlined"
@@ -401,6 +407,7 @@ export default function AttendExam() {
           </Box>
         </Paper>
 
+        {/* Question Navigation */}
         <Paper elevation={0} sx={{ p: 3, mt: 3, borderRadius: 3 }}>
           <Typography variant="subtitle1" gutterBottom>
             Question Navigation:
@@ -430,6 +437,7 @@ export default function AttendExam() {
         </Paper>
       </Container>
 
+      {/* Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)}>
         <DialogTitle>Submit Exam?</DialogTitle>
         <DialogContent>

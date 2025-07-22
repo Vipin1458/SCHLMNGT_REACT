@@ -13,16 +13,26 @@ import RegisterTeacherPage from "../pages/RegisterTeacherPage";
 import MyStudentsPage from "../pages/MyStudentsPage";
 import TeacherExamsPage from "../pages/TeacherExamsPage";
 import CreateExamForm from "../components/CreateExamForm";
-import ForgotPassword from "../pages/ForgotPassword";
-import ResetPassword from "../pages/ResetPassword";
 import ResetPasswordPage from "../pages/ResetPassword";
 import ForgotPasswordPage from "../pages/ForgotPassword";
+import StudentExams from "../pages/StudentExams";
+import StudentResults from "../pages/StudentResults";
+import AttendExam from "../pages/AttendExampage";
 
 
 
-const ProtectedRoute = ({ children }) => {
+
+
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const { auth } = useAuth();
-  return auth ? children : <Navigate to="/login" />;
+
+  if (!auth) return <Navigate to="/login" />;
+
+  if (allowedRoles && !allowedRoles.includes(auth?.user?.role)) {
+    return <Navigate to="/dashboard/profile" />
+  }
+
+  return children;
 };
 
 const router = createBrowserRouter([
@@ -33,12 +43,19 @@ const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute >  
         <DashboardLayout />
       </ProtectedRoute>
     ),
     children: [
-      { path: "", element: <DashboardHome /> },
+       {
+      path: "",
+      element: (
+        <ProtectedRoute allowedRoles={["admin", "teacher"]}>
+          <DashboardHome />
+        </ProtectedRoute>
+      ),
+    },
       {
   path: "profile",
   element: <ProfilePage />,
@@ -72,7 +89,15 @@ const router = createBrowserRouter([
 {
   path: "/dashboard/exams/create",
   element: <CreateExamForm />,
-}
+},
+{
+  path: "/dashboard/student/MyExams",
+  element: <StudentExams />,
+},
+{
+  path: "/dashboard/student/MyResults",
+  element: <StudentResults />,
+},{ path:"/dashboard/attend-exam/:examId", element:<AttendExam />},
   
     ],
   },

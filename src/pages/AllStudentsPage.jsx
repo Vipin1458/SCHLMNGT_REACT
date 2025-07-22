@@ -14,7 +14,7 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
   Badge as BadgeIcon,
-  Today as TodayIcon,
+  Today as TodayIcon, 
   Assignment as AssignmentIcon,
   Grade as GradeIcon
 } from '@mui/icons-material';
@@ -121,7 +121,7 @@ const fetchStudentMarks = async (studentId) => {
       class_name: student.class_name,
       date_of_birth: student.date_of_birth,
       admission_date: student.admission_date,
-      assigned_teacher: student.assigned_teacher?.id || ''
+      assigned_teacher: student.assigned_teacher|| ''
     });
     setEditOpen(true);
   };
@@ -279,8 +279,8 @@ const fetchStudentMarks = async (studentId) => {
                 </Box>
                 
                 <Box sx={{ mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">Class & Grade</Typography>
-                  <Typography variant="body1">{student.class_name} - {student.grade}</Typography>
+                  <Typography variant="body2" color="text.secondary">Class </Typography>
+                  <Typography variant="body1">{student.class_name} </Typography>
                 </Box>
                 
                 <Box sx={{ mb: 2 }}>

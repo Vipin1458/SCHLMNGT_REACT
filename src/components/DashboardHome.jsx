@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from "../context/AuthContext";
 import {
   Box,
   Card,
@@ -49,7 +50,7 @@ const AdminHomepage = () => {
     severity: 'success'
   });
 
- 
+  const { auth } = useAuth();
   const [stats, setStats] = useState({
     totalStudents: 0,
     activeStudents: 0,
@@ -149,23 +150,23 @@ const AdminHomepage = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 1 }}>
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
         <DashboardIcon sx={{ mr: 2, fontSize: 32, color: '#1976d2' }} />
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-          Admin Dashboard
+          {auth?.user?.role === "admin"?"Admin Dashboard":"Teacher Dashboard"}
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
           <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)', height: '100%' }}>
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <Avatar
                   sx={{
-                    width: 64,
-                    height: 64,
+                    width: 62,
+                    height: 62,
                     bgcolor: '#1976d2',
                     mr: 2,
                     fontSize: '1.5rem'
@@ -253,7 +254,7 @@ const AdminHomepage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+        {auth?.user?.role === "admin" &&  <Grid item xs={12} sm={6}>
               <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -285,71 +286,12 @@ const AdminHomepage = () => {
                   </Typography>
                 </CardContent>
               </Card>
-            </Grid>
+            </Grid>}
           </Grid>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Students Overview
-                </Typography>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={showInactiveStudents}
-                      onChange={(e) => setShowInactiveStudents(e.target.checked)}
-                      icon={<VisibilityIcon />}
-                      checkedIcon={<VisibilityOffIcon />}
-                    />
-                  }
-                  label={showInactiveStudents ? "Inactive" : "Active"}
-                />
-              </Box>
-
-              <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
-                <Table stickyHeader size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Roll No</TableCell>
-                      <TableCell>Class</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredStudents.slice(0, 10).map((student) => (
-                      <TableRow key={student.id} hover>
-                        <TableCell>
-                          {student.user?.first_name} {student.user?.last_name}
-                        </TableCell>
-                        <TableCell>{student.roll_number}</TableCell>
-                        <TableCell>{student.class_name}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={student.status === 1 ? 'Active' : 'Inactive'}
-                            color={student.status === 1 ? 'success' : 'default'}
-                            size="small"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              {filteredStudents.length > 10 && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
-                  Showing 10 of {filteredStudents.length} students
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
+       
+     { auth?.user?.role === "admin" &&  <Grid item xs={12} md={6}>
           <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -407,7 +349,7 @@ const AdminHomepage = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </Grid>}
       </Grid>
 
       <Snackbar

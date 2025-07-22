@@ -113,6 +113,28 @@ export default function DashboardLayout() {
             </ListItem>
           </>
         )}
+
+        {auth?.user?.role === "student" && (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/student/MyExams">
+                <ListItemIcon><PersonIcon /></ListItemIcon>
+                <ListItemText primary="My exams" />
+              </ListItemButton>
+            </ListItem>
+
+            <ListItem disablePadding>
+             <ListItemButton component={Link} to="/dashboard/student/MyResults">
+  <ListItemIcon><PersonIcon /></ListItemIcon>
+  <ListItemText primary="My results" />
+</ListItemButton>
+
+            </ListItem>
+
+           
+          </>
+        )}
+
       </List>
     </div>
   );
