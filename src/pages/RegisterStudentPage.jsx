@@ -195,8 +195,13 @@ export default function RegisterStudentPage() {
         severity: 'success'
       });
       
-      setTimeout(() => {
-        navigate("/dashboard/students");
+        setTimeout(() => {
+       
+        if (currentUser?.role === 'admin') {
+         navigate("/dashboard/students");
+        } else if (currentUser?.role === 'teacher') {
+         navigate("/dashboard/mystudents");
+       }
       }, 1500);
       
     } catch (err) {

@@ -3,7 +3,8 @@ import {
   Container, Typography, CircularProgress, Alert, Button, Card, CardContent,
   Grid, Dialog, DialogTitle, DialogContent, DialogActions, Stack, Box,
   Chip, Tabs, Tab, Table, TableHead, TableRow, TableCell, TableBody,
-  TextField, MenuItem, FormControl, InputLabel, Select, Snackbar
+  TextField, MenuItem, FormControl, InputLabel, Select, Snackbar,
+  TablePagination, Paper, InputAdornment
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -16,7 +17,9 @@ import {
   Badge as BadgeIcon,
   Today as TodayIcon, 
   Assignment as AssignmentIcon,
-  Grade as GradeIcon
+  Grade as GradeIcon,
+  Search as SearchIcon,
+  FilterList as FilterIcon
 } from '@mui/icons-material';
 import axiosPrivate from "../api/axiosPrivate";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +33,7 @@ const TabPanel = ({ children, value, index }) => (
 
 export default function AllStudentsPage() {
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,6 +44,14 @@ export default function AllStudentsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [marksLoading, setMarksLoading] = useState(false);
+  
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(12);
+  
+  const [searchName, setSearchName] = useState("");
+  const [selectedClass, setSelectedClass] = useState("");
+  const [availableClasses, setAvailableClasses] = useState([]);
+  
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -65,7 +77,12 @@ export default function AllStudentsPage() {
     try {
       setLoading(true);
       const res = await axiosPrivate.get("/students/");
-      setStudents(res.data.results || res.data);
+      const studentsData = res.data.results || res.data;
+      setStudents(studentsData);
+      
+      const classes = [...new Set(studentsData.map(student => student.class_name))].sort();
+      setAvailableClasses(classes);
+      
     } catch (err) {
       setError("Failed to load students.");
       showSnackbar('Error fetching students', 'error');
@@ -83,23 +100,71 @@ export default function AllStudentsPage() {
     }
   };
 
-const fetchStudentMarks = async (studentId) => {
-  try {
-    setMarksLoading(true);
-    const res = await axiosPrivate.get(`/student-exams/?student_id=${studentId}`);
-    setStudentMarks(prev => ({
-      ...prev,
-      [studentId]: res.data.results || res.data
-    }));
-  } catch (err) {
-    console.error('Error fetching student marks:', err);
-    showSnackbar('Error fetching exam marks', 'error');
-    setStudentMarks(prev => ({ ...prev, [studentId]: [] }));
-  } finally {
-    setMarksLoading(false);
-  }
-};
+  const fetchStudentMarks = async (studentId) => {
+    try {
+      setMarksLoading(true);
+      const student = students.find(s => s.id === studentId);
+      console.log('Fetching marks for student:', student);
+      
+      if (!student) {
+        console.error('Student not found with ID:', studentId);
+        setStudentMarks(prev => ({ ...prev, [studentId]: [] }));
+        return;
+      }
+      
+      const res = await axiosPrivate.get('/student-exams/');
+      console.log('All student exams response:', res.data);
+      
+      const allMarks = res.data.results || res.data;
+      console.log('All marks array:', allMarks);
+      
+      if (Array.isArray(allMarks)) {
+        const studentExamResults = allMarks.filter(mark => {
+          console.log('Checking mark:', mark);
+          console.log('Mark student_roll:', mark.student_roll);
+          console.log('Current student roll:', student.roll_number);
+          
+          return mark.student_roll === student.roll_number;
+        });
+        
+        console.log(`Final filtered marks for student ${studentId} :`, studentExamResults);
+        setStudentMarks(prev => ({
+          ...prev,
+          [studentId]: studentExamResults
+        }));
+      } else {
+        console.log('Response is not an array:', allMarks);
+        setStudentMarks(prev => ({ ...prev, [studentId]: [] }));
+      }
+    } catch (err) {
+      console.error('Error fetching student marks:', err);
+      showSnackbar('Error fetching exam marks', 'error');
+      setStudentMarks(prev => ({ ...prev, [studentId]: [] }));
+    } finally {
+      setMarksLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    let filtered = students;
+
+  
+    if (searchName.trim()) {
+      filtered = filtered.filter(student => {
+        const fullName = `${student.user.first_name} ${student.user.last_name}`.toLowerCase();
+        return fullName.includes(searchName.toLowerCase()) ||
+               student.roll_number.toLowerCase().includes(searchName.toLowerCase());
+      });
+    }
+
+   
+    if (selectedClass) {
+      filtered = filtered.filter(student => student.class_name === selectedClass);
+    }
+
+    setFilteredStudents(filtered);
+    setPage(0); 
+  }, [students, searchName, selectedClass]);
 
   const handleStudentClick = async (student) => {
     setSelectedStudent(student);
@@ -121,7 +186,7 @@ const fetchStudentMarks = async (studentId) => {
       class_name: student.class_name,
       date_of_birth: student.date_of_birth,
       admission_date: student.admission_date,
-      assigned_teacher: student.assigned_teacher|| ''
+      assigned_teacher: student.assigned_teacher || ''
     });
     setEditOpen(true);
   };
@@ -151,7 +216,7 @@ const fetchStudentMarks = async (studentId) => {
       };
 
       await axiosPrivate.patch(`/students/${selectedStudent.id}/`, updateData);
-       fetchStudents();
+      fetchStudents();
       setEditOpen(false);
       showSnackbar('Student updated successfully', 'success');
      
@@ -203,6 +268,20 @@ const fetchStudentMarks = async (studentId) => {
     setSnackbar({ open: true, message, severity });
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const clearFilters = () => {
+    setSearchName("");
+    setSelectedClass("");
+  };
+
   useEffect(() => {
     fetchStudents();
     fetchTeachers();
@@ -220,11 +299,16 @@ const fetchStudentMarks = async (studentId) => {
     </Container>
   );
 
+  const paginatedStudents = filteredStudents.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-          All Students
+          All Students ({filteredStudents.length})
         </Typography>
         <Stack direction="row" spacing={2}>
           <Button
@@ -250,9 +334,67 @@ const fetchStudentMarks = async (studentId) => {
         </Stack>
       </Box>
 
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <FilterIcon sx={{ mr: 1, color: '#1976d2' }} />
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Filters
+          </Typography>
+        </Box>
+        
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={4}>
+            <TextField
+              fullWidth
+              label="Search by Name or Roll Number"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Filter by Class</InputLabel>
+              <Select
+                value={selectedClass}
+                label="Filter by Class"
+                onChange={(e) => setSelectedClass(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>All Classes</em>
+                </MenuItem>
+                {availableClasses.map((className) => (
+                  <MenuItem key={className} value={className}>
+                    Class {className}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          
+          <Grid item xs={12} sm={12} md={4}>
+            <Button
+              variant="outlined"
+              onClick={clearFilters}
+              sx={{ height: '56px', borderRadius: 2 }}
+            >
+              Clear Filters
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
       <Grid container spacing={3}>
-        {students.map((student) => (
-          <Grid item xs={12} sm={6} md={4} key={student.id}>
+        {paginatedStudents.map((student) => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={student.id}>
             <Card 
               sx={{ 
                 borderRadius: 3, 
@@ -269,7 +411,7 @@ const fetchStudentMarks = async (studentId) => {
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <BadgeIcon sx={{ mr: 1, color: '#1976d2' }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
                     {student.user.first_name} {student.user.last_name}
                   </Typography>
                 </Box>
@@ -280,21 +422,21 @@ const fetchStudentMarks = async (studentId) => {
                 </Box>
                 
                 <Box sx={{ mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">Class </Typography>
-                  <Typography variant="body1">{student.class_name} </Typography>
+                  <Typography variant="body2" color="text.secondary">Class</Typography>
+                  <Typography variant="body1">{student.class_name}</Typography>
                 </Box>
                 
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="text.secondary">Assigned Teacher</Typography>
-                  <Typography variant="body1">
+                  <Typography variant="body1" sx={{ fontSize: '0.875rem' }}>
                     {student.assigned_teacher_name || 'Not Assigned'}
                   </Typography>
                 </Box>
                 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Chip
-                    label={student.status === 1 ? 'Active' : 'Inactive'}
-                    color={student.status === 1 ? 'success' : 'default'}
+                    label={student.status === 0 ? 'Active' : 'Inactive'}
+                    color={student.status === 0 ? 'success' : 'default'}
                     size="small"
                   />
                   <Box>
@@ -316,6 +458,38 @@ const fetchStudentMarks = async (studentId) => {
         ))}
       </Grid>
 
+      {filteredStudents.length > 0 && (
+        <Paper sx={{ mt: 3, borderRadius: 3 }}>
+          <TablePagination
+            component="div"
+            count={filteredStudents.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[8, 12, 16, 24]}
+            labelRowsPerPage="Students per page:"
+          />
+        </Paper>
+      )}
+
+      {filteredStudents.length === 0 && !loading && (
+        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3 }}>
+          <SchoolIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No students found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {searchName || selectedClass ? 'Try adjusting your filters' : 'No students have been registered yet'}
+          </Typography>
+          {(searchName || selectedClass) && (
+            <Button variant="outlined" onClick={clearFilters}>
+              Clear Filters
+            </Button>
+          )}
+        </Paper>
+      )}
+
       <Dialog
         open={detailsOpen}
         onClose={() => setDetailsOpen(false)}
@@ -335,15 +509,13 @@ const fetchStudentMarks = async (studentId) => {
           {selectedStudent && (
             <>
               <Tabs
-  value={tabValue}
-  onChange={(_, newValue) => setTabValue(newValue)}
-  sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}
->
-  <Tab label="Basic Information" />
-  <Tab label={`Exam Results (${(studentMarks[selectedStudent.id] || []).length})`} />
-</Tabs>
-
-
+                value={tabValue}
+                onChange={(_, newValue) => setTabValue(newValue)}
+                sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}
+              >
+                <Tab label="Basic Information" />
+                <Tab label={`Exam Results (${(studentMarks[selectedStudent.id] || []).length})`} />
+              </Tabs>
 
               <TabPanel value={tabValue} index={0}>
                 <Grid container spacing={3}>
@@ -373,8 +545,8 @@ const fetchStudentMarks = async (studentId) => {
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body2" color="text.secondary">Status</Typography>
                       <Chip
-                        label={selectedStudent.status === 1 ? 'Active' : 'Inactive'}
-                        color={selectedStudent.status === 1 ? 'success' : 'default'}
+                        label={selectedStudent.status === 0 ? 'Active' : 'Inactive'}
+                        color={selectedStudent.status === 0 ? 'success' : 'default'}
                         size="small"
                       />
                     </Box>
@@ -417,11 +589,11 @@ const fetchStudentMarks = async (studentId) => {
 
               <TabPanel value={tabValue} index={1}>
                 {marksLoading ? (
-                   <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-    <CircularProgress />
-  </Box>
-) : (studentMarks[selectedStudent.id] || []).length > 0 ? (
-  <Table>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : (studentMarks[selectedStudent.id] || []).length > 0 ? (
+                  <Table>
                     <TableHead>
                       <TableRow>
                         <TableCell>Exam Title</TableCell>
@@ -433,8 +605,8 @@ const fetchStudentMarks = async (studentId) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                     {(studentMarks[selectedStudent.id] || []).map((mark) => (
-        <TableRow key={mark.id}>
+                      {(studentMarks[selectedStudent.id] || []).map((mark) => (
+                        <TableRow key={mark.id}>
                           <TableCell>{mark.exam_title}</TableCell>
                           <TableCell>{mark.exam_subject}</TableCell>
                           <TableCell>
@@ -460,6 +632,9 @@ const fetchStudentMarks = async (studentId) => {
                     <GradeIcon sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
                     <Typography variant="h6" color="text.secondary">
                       No exam results found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      This student hasn't taken any exams yet
                     </Typography>
                   </Box>
                 )}
@@ -632,4 +807,4 @@ const fetchStudentMarks = async (studentId) => {
       </Snackbar>
     </Container>
   );
-} 
+}

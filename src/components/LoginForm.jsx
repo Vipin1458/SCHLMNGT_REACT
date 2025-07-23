@@ -11,6 +11,7 @@ import {
   Typography,
   Paper,
 } from "@mui/material";
+import toast from "react-hot-toast";
 
 export default function LoginForm() {
   const { register, handleSubmit } = useForm();
@@ -44,7 +45,7 @@ export default function LoginForm() {
 
       navigate("/dashboard");
     } catch (err) {
-      alert("Invalid credentials. Try again.");
+      toast.error("Invalid credentials. Try again.");
     }
   };
 

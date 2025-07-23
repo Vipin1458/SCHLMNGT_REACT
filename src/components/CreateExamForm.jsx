@@ -147,7 +147,11 @@ export default function CreateExamForm() {
       });
 
       setTimeout(() => {
+      if (currentUser?.role === 'admin') {
         navigate("/dashboard/exams");
+      } else if (currentUser?.role === 'teacher') {
+         navigate("/dashboard/teacher/exams");
+       }
       }, 1500);
 
     } catch (err) {

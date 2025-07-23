@@ -18,6 +18,7 @@ import ForgotPasswordPage from "../pages/ForgotPassword";
 import StudentExams from "../pages/StudentExams";
 import StudentResults from "../pages/StudentResults";
 import AttendExam from "../pages/AttendExampage";
+import LoginRedirect from "./LoginRedirect";
 
 
 
@@ -37,7 +38,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/login" /> },
-  { path: "/login", element: <LoginForm /> },
+   { path: "/login", element: <LoginRedirect /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
   {
