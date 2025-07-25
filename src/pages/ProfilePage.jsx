@@ -40,7 +40,7 @@ export default function ProfilePage() {
     last_name: '',
     email: '',
     phone_number: '',
-    status: 1,
+    status: '',
   });
 
   useEffect(() => {
@@ -142,14 +142,9 @@ export default function ProfilePage() {
 
       const res = await axiosPrivate.patch("/teacher/me", updateData);
       setProfile((prev) => ({
-        ...prev,
-        user: {
-          ...prev.user,
-          ...updateData.user
-        },
-        phone_number: updateData.phone_number,
-        status:updateData.status
-      }));
+  ...prev,
+  ...updateData
+}));
       setEditOpen(false);
     } catch (error) {
       console.error("Update failed", error);
@@ -194,7 +189,7 @@ export default function ProfilePage() {
     `,
     position: 'relative',
     overflow: 'hidden',
-    p: 2, // padding inside card
+    p: 2, 
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -293,13 +288,13 @@ export default function ProfilePage() {
             />
           <Button
   variant="contained"
-  size="small"  // <-- reduces height & font
-  startIcon={<EditIcon fontSize="small" />} // smaller icon
+  size="small"  
+  startIcon={<EditIcon fontSize="small" />} 
   onClick={handleEditOpenForTeacher}
   sx={{
-    px: 1.5, // optional: reduce horizontal padding
-    py: 0.5, // optional: reduce vertical padding
-    fontSize: '0.75rem', // optional: smaller text
+    px: 1.5, 
+    py: 0.5, 
+    fontSize: '0.75rem', 
   }}
 >
               Edit Profile
@@ -322,7 +317,7 @@ export default function ProfilePage() {
   </DialogTitle>
 )}        <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-    {!auth?.user?.role=='teacher' &&  <Grid item xs={6}>
+    {auth?.user?.role !=='teacher' &&  <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="First Name"
@@ -330,7 +325,7 @@ export default function ProfilePage() {
                 onChange={(e) => setEditFormData(prev => ({ ...prev, first_name: e.target.value }))}
               />
             </Grid>}
-           {!auth?.user?.role=='teacher' &&  <Grid item xs={6}>
+           {auth?.user?.role !=='teacher' &&  <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="Last Name"

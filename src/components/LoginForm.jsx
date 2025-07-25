@@ -29,15 +29,9 @@ export default function LoginForm() {
       const access = tokenRes.data.access;
       const refresh = tokenRes.data.refresh;
 
-    
-      const userRes = await axios.post("http://localhost:8000/login", {
-        username: data.username,
-        password: data.password,
-      });
-
       const user = {
-        username: userRes.data.username,
-        role: userRes.data.role,
+        username: tokenRes.data.username,
+        role: tokenRes.data.role,
       };
 
       

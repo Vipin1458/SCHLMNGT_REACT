@@ -37,7 +37,6 @@ const studentSchema = yup.object().shape({
 
 export default function RegisterStudentPage() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [error, setError] = useState("");
   const [teachers, setTeachers] = useState([]);
   const [file, setFile] = useState(null);
   const [showImport, setShowImport] = useState(false);
@@ -124,9 +123,16 @@ export default function RegisterStudentPage() {
       reset();
       
    
-      setTimeout(() => {
-        navigate("/dashboard/students");
-      }, 1500);
+    if (currentUser?.role === "admin") {
+  setTimeout(() => {
+    navigate("/dashboard/students");
+  }, 1500);
+} else {
+  setTimeout(() => {
+    navigate("/dashboard/mystudents");
+  }, 1500);
+}
+
 
     } catch (err) {
       console.error('Registration error:', err);

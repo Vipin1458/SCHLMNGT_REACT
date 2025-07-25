@@ -173,7 +173,7 @@ const AllTeachers = () => {
         date_of_joining: editFormData.date_of_joining
       };
 
-      await axiosPrivate.put(`/teachers/${selectedTeacher.id}/`, updateData);
+      await axiosPrivate.patch(`/teachers/${selectedTeacher.id}/`, updateData);
       showSnackbar('Teacher updated successfully', 'success');
       setEditOpen(false);
       fetchTeachers();
@@ -357,7 +357,17 @@ const AllTeachers = () => {
 
       <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(212, 12, 12, 0.1)' }}>
         <CardContent>
-          <Box sx={{ height: 600, width: '100%' }}>
+          <Box
+  sx={{
+    height: {
+      xs: 300,  
+      sm: 400,  
+      md: 500, 
+      lg: 600, 
+    },
+    width: '100%',
+  }}
+>
             <DataGrid
               rows={teachers}
               columns={columns}

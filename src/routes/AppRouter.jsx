@@ -19,6 +19,7 @@ import StudentExams from "../pages/StudentExams";
 import StudentResults from "../pages/StudentResults";
 import AttendExam from "../pages/AttendExampage";
 import LoginRedirect from "./LoginRedirect";
+import AnswerSheet from "../components/AnswerSheet";
 
 
 
@@ -103,6 +104,7 @@ const router = createBrowserRouter([
   path: "/dashboard/student/MyResults",
   element: <StudentResults />,
 },{ path:"/dashboard/attend-exam/:examId", element:<AttendExam />},
+{ path:"/dashboard/marksheet/:examId", element:<AnswerSheet />},
   
     ],
   },

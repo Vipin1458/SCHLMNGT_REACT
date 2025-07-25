@@ -77,7 +77,7 @@ export default function AllStudentsPage() {
     try {
       setLoading(true);
       const res = await axiosPrivate.get("/students/");
-      const studentsData = res.data.results || res.data;
+      const studentsData = res.data.results 
       setStudents(studentsData);
       
       const classes = [...new Set(studentsData.map(student => student.class_name))].sort();
@@ -104,7 +104,6 @@ export default function AllStudentsPage() {
     try {
       setMarksLoading(true);
       const student = students.find(s => s.id === studentId);
-      console.log('Fetching marks for student:', student);
       
       if (!student) {
         console.error('Student not found with ID:', studentId);
@@ -113,14 +112,13 @@ export default function AllStudentsPage() {
       }
       
       const res = await axiosPrivate.get('/student-exams/');
-      console.log('All student exams response:', res.data);
       
       const allMarks = res.data.results || res.data;
       console.log('All marks array:', allMarks);
       
       if (Array.isArray(allMarks)) {
         const studentExamResults = allMarks.filter(mark => {
-          console.log('Checking mark:', mark);
+
           console.log('Mark student_roll:', mark.student_roll);
           console.log('Current student roll:', student.roll_number);
           
@@ -362,7 +360,7 @@ export default function AllStudentsPage() {
           
           <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth>
-              <InputLabel>Filter by Class</InputLabel>
+              <InputLabel >Filter by Class</InputLabel>
               <Select
                 value={selectedClass}
                 label="Filter by Class"
@@ -467,7 +465,7 @@ export default function AllStudentsPage() {
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[8, 12, 16, 24]}
+            rowsPerPageOptions={[10, 15, 20]}
             labelRowsPerPage="Students per page:"
           />
         </Paper>

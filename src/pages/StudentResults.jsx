@@ -30,17 +30,24 @@ import {
   Schedule
 } from '@mui/icons-material';
 import axiosPrivate from '../api/axiosPrivate';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const StudentResults = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchResults = async () => {
       try {
         const response = await axiosPrivate.get('/exams/my_marks/');
-        setResults(response.data?.results || response.data || []);
+        setResults(response.data || []);
+        console.log('results',response.data);
+        
+    
+    
+        
       } catch (err) {
         console.error('Error fetching results:', err);
         setError('Failed to load results. Please try again.');
@@ -221,7 +228,7 @@ const StudentResults = () => {
                 <TableContainer>
                   <Table>
                     <TableHead>
-                      <TableRow sx={{ backgroundColor: '#f5f7fa' }}>
+                      <TableRow  sx={{ backgroundColor: '#f5f7fa' }}>
                         <TableCell sx={{ fontWeight: 600 }}>Exam Title</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Subject</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>Score</TableCell>
@@ -236,7 +243,7 @@ const StudentResults = () => {
                         const gradeInfo = getGrade(percentage);
                         
                         return (
-                          <TableRow key={result.id} sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}>
+                          <TableRow onClick={() => navigate(`/dashboard/marksheet/${result.exam}`)}  key={result.id} sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}>
                             <TableCell>
                               <Typography variant="subtitle2" fontWeight="600">
                                 {result.exam_title}
@@ -300,82 +307,6 @@ const StudentResults = () => {
               )}
             </Box>
           </Paper>
-
-          {/* Performance Summary */}
-          {results.length > 0 && (
-            <Paper elevation={0} sx={{ borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)', mt: 3 }}>
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom sx={{ color: '#2196f3', fontWeight: 600 }}>
-                  Performance Summary
-                </Typography>
-                
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Subject-wise Performance
-                      </Typography>
-                      {Object.entries(
-                        results.reduce((acc, result) => {
-                          const subject = result.exam_subject;
-                          if (!acc[subject]) {
-                            acc[subject] = { total: 0, count: 0 };
-                          }
-                          acc[subject].total += (result.marks / result.total_questions) * 100;
-                          acc[subject].count += 1;
-                          return acc;
-                        }, {})
-                      ).map(([subject, data]) => (
-                        <Box key={subject} sx={{ mb: 1 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2">{subject}</Typography>
-                            <Typography variant="body2" fontWeight="600">
-                              {(data.total / data.count).toFixed(1)}%
-                            </Typography>
-                          </Box>
-                          <LinearProgress 
-                            variant="determinate" 
-                            value={data.total / data.count} 
-                            sx={{ height: 6, borderRadius: 3 }}
-                          />
-                        </Box>
-                      ))}
-                    </Box>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Grade Distribution
-                      </Typography>
-                      {Object.entries(
-                        results.reduce((acc, result) => {
-                          const percentage = (result.marks / result.total_questions) * 100;
-                          const grade = getGrade(percentage).grade;
-                          acc[grade] = (acc[grade] || 0) + 1;
-                          return acc;
-                        }, {})
-                      ).map(([grade, count]) => (
-                        <Box key={grade} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Chip 
-                            label={`Grade ${grade}`} 
-                            size="small" 
-                            sx={{ 
-                              backgroundColor: `${getGrade(grade === 'A+' ? 95 : grade === 'A' ? 85 : grade === 'B' ? 75 : grade === 'C' ? 65 : 55).color}20`,
-                              color: getGrade(grade === 'A+' ? 95 : grade === 'A' ? 85 : grade === 'B' ? 75 : grade === 'C' ? 65 : 55).color
-                            }}
-                          />
-                          <Typography variant="body2" fontWeight="600">
-                            {count} exam{count !== 1 ? 's' : ''}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Paper>
-          )}
         </Container>
       </Fade>
     </Box>

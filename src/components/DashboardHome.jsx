@@ -42,7 +42,6 @@ const AdminHomepage = () => {
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showInactiveStudents, setShowInactiveStudents] = useState(false);
   const [showInactiveTeachers, setShowInactiveTeachers] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -75,6 +74,8 @@ const AdminHomepage = () => {
   const fetchStudents = async () => {
     try {
       const response = await axiosPrivate.get('/students/');
+      console.log("response_inDshHme",response);
+      
       const studentsData = response.data.results || response.data;
       setStudents(studentsData);
       
@@ -118,10 +119,6 @@ const AdminHomepage = () => {
   const showSnackbar = (message, severity) => {
     setSnackbar({ open: true, message, severity });
   };
-
-  const filteredStudents = showInactiveStudents 
-    ? students.filter(student => student.status === 0)
-    : students.filter(student => student.status === 1);
 
   const filteredTeachers = showInactiveTeachers 
     ? teachers.filter(teacher => teacher.status === 0)
