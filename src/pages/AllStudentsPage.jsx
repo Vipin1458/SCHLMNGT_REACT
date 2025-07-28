@@ -1,10 +1,36 @@
 import { useEffect, useState } from "react";
+import { debounce } from "lodash";
 import {
-  Container, Typography, CircularProgress, Alert, Button, Card, CardContent,
-  Grid, Dialog, DialogTitle, DialogContent, DialogActions, Stack, Box,
-  Chip, Tabs, Tab, Table, TableHead, TableRow, TableCell, TableBody,
-  TextField, MenuItem, FormControl, InputLabel, Select, Snackbar,
-  TablePagination, Paper, InputAdornment
+  Container,
+  Typography,
+  CircularProgress,
+  Alert,
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  Box,
+  Chip,
+  Tabs,
+  Tab,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TextField,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  Snackbar,
+  Paper,
+  InputAdornment,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -15,12 +41,12 @@ import {
   Phone as PhoneIcon,
   Email as EmailIcon,
   Badge as BadgeIcon,
-  Today as TodayIcon, 
+  Today as TodayIcon,
   Assignment as AssignmentIcon,
   Grade as GradeIcon,
   Search as SearchIcon,
-  FilterList as FilterIcon
-} from '@mui/icons-material';
+  FilterList as FilterIcon,
+} from "@mui/icons-material";
 import axiosPrivate from "../api/axiosPrivate";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -33,7 +59,6 @@ const TabPanel = ({ children, value, index }) => (
 
 export default function AllStudentsPage() {
   const [students, setStudents] = useState([]);
-  const [filteredStudents, setFilteredStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,48 +69,55 @@ export default function AllStudentsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [marksLoading, setMarksLoading] = useState(false);
-  
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(12);
-  
   const [searchName, setSearchName] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [availableClasses, setAvailableClasses] = useState([]);
-  
+  const [nextPage, setNextPage] = useState(null);
+  const [prevPage, setPrevPage] = useState(null);
+
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success'
+    message: "",
+    severity: "success",
   });
 
   const [editFormData, setEditFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    roll_number: '',
-    phone_number: '',
-    grade: '',
-    class_name: '',
-    date_of_birth: '',
-    admission_date: '',
-    assigned_teacher: ''
+    first_name: "",
+    last_name: "",
+    email: "",
+    roll_number: "",
+    phone_number: "",
+    grade: "",
+    class_name: "",
+    date_of_birth: "",
+    admission_date: "",
+    assigned_teacher: "",
   });
 
   const navigate = useNavigate();
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (url = "/students/") => {
     try {
       setLoading(true);
-      const res = await axiosPrivate.get("/students/");
-      const studentsData = res.data.results 
+      const res = await axiosPrivate.get(url, {
+        params: {
+          search: searchName || undefined,
+          class_name: selectedClass || undefined,
+        },
+      });
+      console.log("resss", res.data.next);
+      setNextPage(res.data.next);
+      setPrevPage(res.data.previous);
+      const studentsData = res.data.results;
       setStudents(studentsData);
-      
-      const classes = [...new Set(studentsData.map(student => student.class_name))].sort();
+
+      const classes = [
+        ...new Set(studentsData.map((student) => student.class_name)),
+      ].sort();
       setAvailableClasses(classes);
-      
     } catch (err) {
       setError("Failed to load students.");
-      showSnackbar('Error fetching students', 'error');
+      showSnackbar("Error fetching students", "error");
     } finally {
       setLoading(false);
     }
@@ -96,79 +128,60 @@ export default function AllStudentsPage() {
       const res = await axiosPrivate.get("/teachers/");
       setTeachers(res.data.results || res.data);
     } catch (err) {
-      console.error('Error fetching teachers:', err);
+      console.error("Error fetching teachers:", err);
     }
   };
 
   const fetchStudentMarks = async (studentId) => {
     try {
       setMarksLoading(true);
-      const student = students.find(s => s.id === studentId);
-      
+      const student = students.find((s) => s.id === studentId);
+
       if (!student) {
-        console.error('Student not found with ID:', studentId);
-        setStudentMarks(prev => ({ ...prev, [studentId]: [] }));
+        console.error("Student not found with ID:", studentId);
+        setStudentMarks((prev) => ({ ...prev, [studentId]: [] }));
         return;
       }
-      
-      const res = await axiosPrivate.get('/student-exams/');
-      
-      const allMarks = res.data.results || res.data;
-      console.log('All marks array:', allMarks);
-      
-      if (Array.isArray(allMarks)) {
-        const studentExamResults = allMarks.filter(mark => {
 
-          console.log('Mark student_roll:', mark.student_roll);
-          console.log('Current student roll:', student.roll_number);
-          
+      const res = await axiosPrivate.get("/student-exams/");
+
+      const allMarks = res.data.results || res.data;
+      console.log("All marks array:", allMarks);
+
+      if (Array.isArray(allMarks)) {
+        const studentExamResults = allMarks.filter((mark) => {
+          console.log("Mark student_roll:", mark.student_roll);
+          console.log("Current student roll:", student.roll_number);
+
           return mark.student_roll === student.roll_number;
         });
-        
-        console.log(`Final filtered marks for student ${studentId} :`, studentExamResults);
-        setStudentMarks(prev => ({
+
+        console.log(
+          `Final filtered marks for student ${studentId} :`,
+          studentExamResults
+        );
+        setStudentMarks((prev) => ({
           ...prev,
-          [studentId]: studentExamResults
+          [studentId]: studentExamResults,
         }));
       } else {
-        console.log('Response is not an array:', allMarks);
-        setStudentMarks(prev => ({ ...prev, [studentId]: [] }));
+        console.log("Response is not an array:", allMarks);
+        setStudentMarks((prev) => ({ ...prev, [studentId]: [] }));
       }
     } catch (err) {
-      console.error('Error fetching student marks:', err);
-      showSnackbar('Error fetching exam marks', 'error');
-      setStudentMarks(prev => ({ ...prev, [studentId]: [] }));
+      console.error("Error fetching student marks:", err);
+      showSnackbar("Error fetching exam marks", "error");
+      setStudentMarks((prev) => ({ ...prev, [studentId]: [] }));
     } finally {
       setMarksLoading(false);
     }
   };
 
-  useEffect(() => {
-    let filtered = students;
-
-  
-    if (searchName.trim()) {
-      filtered = filtered.filter(student => {
-        const fullName = `${student.user.first_name} ${student.user.last_name}`.toLowerCase();
-        return fullName.includes(searchName.toLowerCase()) ||
-               student.roll_number.toLowerCase().includes(searchName.toLowerCase());
-      });
-    }
-
-   
-    if (selectedClass) {
-      filtered = filtered.filter(student => student.class_name === selectedClass);
-    }
-
-    setFilteredStudents(filtered);
-    setPage(0); 
-  }, [students, searchName, selectedClass]);
-
   const handleStudentClick = async (student) => {
     setSelectedStudent(student);
     setDetailsOpen(true);
     setTabValue(0);
-    
+
     await fetchStudentMarks(student.id);
   };
 
@@ -184,7 +197,7 @@ export default function AllStudentsPage() {
       class_name: student.class_name,
       date_of_birth: student.date_of_birth,
       admission_date: student.admission_date,
-      assigned_teacher: student.assigned_teacher || ''
+      assigned_teacher: student.assigned_teacher || "",
     });
     setEditOpen(true);
   };
@@ -210,17 +223,16 @@ export default function AllStudentsPage() {
         class_name: editFormData.class_name,
         date_of_birth: editFormData.date_of_birth,
         admission_date: editFormData.admission_date,
-        assigned_teacher: editFormData.assigned_teacher || null
+        assigned_teacher: editFormData.assigned_teacher || null,
       };
 
       await axiosPrivate.patch(`/students/${selectedStudent.id}/`, updateData);
       fetchStudents();
       setEditOpen(false);
-      showSnackbar('Student updated successfully', 'success');
-     
+      showSnackbar("Student updated successfully", "success");
     } catch (error) {
-      console.error('Error updating student:', error);
-      showSnackbar('Error updating student', 'error');
+      console.error("Error updating student:", error);
+      showSnackbar("Error updating student", "error");
     }
   };
 
@@ -233,10 +245,10 @@ export default function AllStudentsPage() {
       setDeleteConfirmOpen(false);
       setDetailsOpen(false);
       setSelectedStudent(null);
-      showSnackbar('Student deleted successfully', 'success');
+      showSnackbar("Student deleted successfully", "success");
     } catch (err) {
-      console.error('Error deleting student:', err);
-      showSnackbar('Error deleting student', 'error');
+      console.error("Error deleting student:", err);
+      showSnackbar("Error deleting student", "error");
     }
   };
 
@@ -266,18 +278,33 @@ export default function AllStudentsPage() {
     setSnackbar({ open: true, message, severity });
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   const clearFilters = () => {
     setSearchName("");
     setSelectedClass("");
+  };
+
+  const onNextClick = async () => {
+    if (!nextPage) return;
+    try {
+      const res = await axiosPrivate.get(nextPage);
+      setNextPage(res.data.next);
+      setPrevPage(res.data.previous);
+      setStudents(res.data.results);
+    } catch (error) {
+      console.error("Error fetching next page:", error);
+    }
+  };
+
+  const onPrevClick = async () => {
+    if (!prevPage) return;
+    try {
+      const res = await axiosPrivate.get(prevPage);
+      setNextPage(res.data.next);
+      setPrevPage(res.data.previous);
+      setStudents(res.data.results);
+    } catch (error) {
+      console.error("Error fetching previous page:", error);
+    }
   };
 
   useEffect(() => {
@@ -285,39 +312,49 @@ export default function AllStudentsPage() {
     fetchTeachers();
   }, []);
 
-  if (loading) return (
-    <Container sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-      <CircularProgress />
-    </Container>
-  );
+  const debouncedFetch = debounce(() => {
+    fetchStudents();
+  }, 800);
 
-  if (error) return (
-    <Container sx={{ mt: 4 }}>
-      <Alert severity="error">{error}</Alert>
-    </Container>
-  );
+  useEffect(() => {
+    debouncedFetch();
+    return debouncedFetch.cancel;
+  }, [searchName, selectedClass]);
 
-  const paginatedStudents = filteredStudents.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  if (loading)
+    return (
+      <Container sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+        <CircularProgress />
+      </Container>
+    );
+
+  if (error)
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-          All Students ({filteredStudents.length})
-        </Typography>
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Stack direction="row" spacing={2}>
           <Button
             variant="contained"
             startIcon={<PersonAddIcon />}
             onClick={() => navigate("/dashboard/students/register")}
             sx={{
-              bgcolor: '#1976d2',
-              '&:hover': { bgcolor: '#1565c0' },
+              bgcolor: "#1976d2",
+              "&:hover": { bgcolor: "#1565c0" },
               borderRadius: 2,
-              px: 3
+              px: 3,
             }}
           >
             Register Student
@@ -333,13 +370,13 @@ export default function AllStudentsPage() {
       </Box>
 
       <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <FilterIcon sx={{ mr: 1, color: '#1976d2' }} />
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+          <FilterIcon sx={{ mr: 1, color: "#1976d2" }} />
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             Filters
           </Typography>
         </Box>
-        
+
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={6} md={4}>
             <TextField
@@ -357,10 +394,10 @@ export default function AllStudentsPage() {
               sx={{ borderRadius: 2 }}
             />
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth>
-              <InputLabel >Filter by Class</InputLabel>
+              <InputLabel>Filter by Class</InputLabel>
               <Select
                 value={selectedClass}
                 label="Filter by Class"
@@ -377,12 +414,12 @@ export default function AllStudentsPage() {
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12} sm={12} md={4}>
             <Button
               variant="outlined"
               onClick={clearFilters}
-              sx={{ height: '56px', borderRadius: 2 }}
+              sx={{ height: "56px", borderRadius: 2 }}
             >
               Clear Filters
             </Button>
@@ -391,50 +428,65 @@ export default function AllStudentsPage() {
       </Paper>
 
       <Grid container spacing={3}>
-        {paginatedStudents.map((student) => (
+        {students.map((student) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={student.id}>
-            <Card 
-              sx={{ 
-                borderRadius: 3, 
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
-                }
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                cursor: "pointer",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+                },
               }}
               onClick={() => handleStudentClick(student)}
             >
               <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <BadgeIcon sx={{ mr: 1, color: '#1976d2' }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <BadgeIcon sx={{ mr: 1, color: "#1976d2" }} />
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, fontSize: "1rem" }}
+                  >
                     {student.user.first_name} {student.user.last_name}
                   </Typography>
                 </Box>
-                
+
                 <Box sx={{ mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">Roll Number</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Roll Number
+                  </Typography>
                   <Typography variant="body1">{student.roll_number}</Typography>
                 </Box>
-                
+
                 <Box sx={{ mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">Class</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Class
+                  </Typography>
                   <Typography variant="body1">{student.class_name}</Typography>
                 </Box>
-                
+
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">Assigned Teacher</Typography>
-                  <Typography variant="body1" sx={{ fontSize: '0.875rem' }}>
-                    {student.assigned_teacher_name || 'Not Assigned'}
+                  <Typography variant="body2" color="text.secondary">
+                    Assigned Teacher
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontSize: "0.875rem" }}>
+                    {student.assigned_teacher_name || "Not Assigned"}
                   </Typography>
                 </Box>
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Chip
-                    label={student.status === 0 ? 'Active' : 'Inactive'}
-                    color={student.status === 0 ? 'success' : 'default'}
+                    label={student.status === 0 ? "Active" : "Inactive"}
+                    color={student.status === 0 ? "success" : "default"}
                     size="small"
                   />
                   <Box>
@@ -456,29 +508,23 @@ export default function AllStudentsPage() {
         ))}
       </Grid>
 
-      {filteredStudents.length > 0 && (
-        <Paper sx={{ mt: 3, borderRadius: 3 }}>
-          <TablePagination
-            component="div"
-            count={filteredStudents.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[10, 15, 20]}
-            labelRowsPerPage="Students per page:"
-          />
-        </Paper>
-      )}
+      <Button disabled={!prevPage} onClick={onPrevClick}>
+        prev
+      </Button>
+      <Button disabled={!nextPage} onClick={onNextClick}>
+        next
+      </Button>
 
-      {filteredStudents.length === 0 && !loading && (
-        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 3 }}>
-          <SchoolIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
+      {students.length === 0 && !loading && (
+        <Paper sx={{ p: 4, textAlign: "center", borderRadius: 3 }}>
+          <SchoolIcon sx={{ fontSize: 64, color: "#ccc", mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No students found
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {searchName || selectedClass ? 'Try adjusting your filters' : 'No students have been registered yet'}
+            {searchName || selectedClass
+              ? "Try adjusting your filters"
+              : "No students have been registered yet"}
           </Typography>
           {(searchName || selectedClass) && (
             <Button variant="outlined" onClick={clearFilters}>
@@ -494,91 +540,133 @@ export default function AllStudentsPage() {
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3 },
         }}
       >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
+        >
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
             Student Details
           </Typography>
         </DialogTitle>
-        
+
         <DialogContent sx={{ p: 0 }}>
           {selectedStudent && (
             <>
               <Tabs
                 value={tabValue}
                 onChange={(_, newValue) => setTabValue(newValue)}
-                sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}
+                sx={{ borderBottom: 1, borderColor: "divider", px: 3 }}
               >
                 <Tab label="Basic Information" />
-                <Tab label={`Exam Results (${(studentMarks[selectedStudent.id] || []).length})`} />
+                <Tab
+                  label={`Exam Results (${
+                    (studentMarks[selectedStudent.id] || []).length
+                  })`}
+                />
               </Tabs>
 
               <TabPanel value={tabValue} index={0}>
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <BadgeIcon sx={{ mr: 1, color: '#1976d2' }} />
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <BadgeIcon sx={{ mr: 1, color: "#1976d2" }} />
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {selectedStudent.user.first_name} {selectedStudent.user.last_name}
+                        {selectedStudent.user.first_name}{" "}
+                        {selectedStudent.user.last_name}
                       </Typography>
                     </Box>
-                    
+
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary">Username</Typography>
-                      <Typography variant="body1">{selectedStudent.user.username}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Username
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedStudent.user.username}
+                      </Typography>
                     </Box>
-                    
+
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary">Roll Number</Typography>
-                      <Typography variant="body1">{selectedStudent.roll_number}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Roll Number
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedStudent.roll_number}
+                      </Typography>
                     </Box>
-                    
+
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary">Class & Grade</Typography>
-                      <Typography variant="body1">{selectedStudent.class_name} - {selectedStudent.grade}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Class & Grade
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedStudent.class_name} - {selectedStudent.grade}
+                      </Typography>
                     </Box>
-                    
+
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary">Status</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Status
+                      </Typography>
                       <Chip
-                        label={selectedStudent.status === 0 ? 'Active' : 'Inactive'}
-                        color={selectedStudent.status === 0 ? 'success' : 'default'}
+                        label={
+                          selectedStudent.status === 0 ? "Active" : "Inactive"
+                        }
+                        color={
+                          selectedStudent.status === 0 ? "success" : "default"
+                        }
                         size="small"
                       />
                     </Box>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <EmailIcon sx={{ mr: 1, color: '#1976d2' }} />
-                      <Typography variant="body1">{selectedStudent.user.email}</Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <PhoneIcon sx={{ mr: 1, color: '#1976d2' }} />
-                      <Typography variant="body1">{selectedStudent.phone_number}</Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <SchoolIcon sx={{ mr: 1, color: '#1976d2' }} />
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <EmailIcon sx={{ mr: 1, color: "#1976d2" }} />
                       <Typography variant="body1">
-                        Teacher: {selectedStudent.assigned_teacher_name || 'Not Assigned'}
+                        {selectedStudent.user.email}
                       </Typography>
                     </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <TodayIcon sx={{ mr: 1, color: '#1976d2' }} />
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <PhoneIcon sx={{ mr: 1, color: "#1976d2" }} />
                       <Typography variant="body1">
-                        Admission: {new Date(selectedStudent.admission_date).toLocaleDateString()}
+                        {selectedStudent.phone_number}
                       </Typography>
                     </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <TodayIcon sx={{ mr: 1, color: '#1976d2' }} />
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <SchoolIcon sx={{ mr: 1, color: "#1976d2" }} />
                       <Typography variant="body1">
-                        DOB: {new Date(selectedStudent.date_of_birth).toLocaleDateString()}
+                        Teacher:{" "}
+                        {selectedStudent.assigned_teacher_name ||
+                          "Not Assigned"}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <TodayIcon sx={{ mr: 1, color: "#1976d2" }} />
+                      <Typography variant="body1">
+                        Admission:{" "}
+                        {new Date(
+                          selectedStudent.admission_date
+                        ).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <TodayIcon sx={{ mr: 1, color: "#1976d2" }} />
+                      <Typography variant="body1">
+                        DOB:{" "}
+                        {new Date(
+                          selectedStudent.date_of_birth
+                        ).toLocaleDateString()}
                       </Typography>
                     </Box>
                   </Grid>
@@ -587,7 +675,9 @@ export default function AllStudentsPage() {
 
               <TabPanel value={tabValue} index={1}>
                 {marksLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", py: 4 }}
+                  >
                     <CircularProgress />
                   </Box>
                 ) : (studentMarks[selectedStudent.id] || []).length > 0 ? (
@@ -610,13 +700,21 @@ export default function AllStudentsPage() {
                           <TableCell>
                             <Chip
                               label={mark.marks}
-                              color={mark.marks >= mark.total_questions * 0.6 ? 'success' : 'error'}
+                              color={
+                                mark.marks >= mark.total_questions * 0.6
+                                  ? "success"
+                                  : "error"
+                              }
                               size="small"
                             />
                           </TableCell>
                           <TableCell>{mark.total_questions}</TableCell>
                           <TableCell>
-                            {((mark.marks / mark.total_questions) * 100).toFixed(1)}%
+                            {(
+                              (mark.marks / mark.total_questions) *
+                              100
+                            ).toFixed(1)}
+                            %
                           </TableCell>
                           <TableCell>
                             {new Date(mark.submitted_at).toLocaleDateString()}
@@ -626,8 +724,8 @@ export default function AllStudentsPage() {
                     </TableBody>
                   </Table>
                 ) : (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <GradeIcon sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <GradeIcon sx={{ fontSize: 48, color: "#ccc", mb: 2 }} />
                     <Typography variant="h6" color="text.secondary">
                       No exam results found
                     </Typography>
@@ -640,7 +738,7 @@ export default function AllStudentsPage() {
             </>
           )}
         </DialogContent>
-        
+
         <DialogActions sx={{ p: 3, pt: 1 }}>
           <Button
             onClick={() => selectedStudent && handleEditClick(selectedStudent)}
@@ -651,7 +749,9 @@ export default function AllStudentsPage() {
             Edit Student
           </Button>
           <Button
-            onClick={() => selectedStudent && handleDeleteClick(selectedStudent)}
+            onClick={() =>
+              selectedStudent && handleDeleteClick(selectedStudent)
+            }
             variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
@@ -661,7 +761,12 @@ export default function AllStudentsPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit Student</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -670,7 +775,12 @@ export default function AllStudentsPage() {
                 fullWidth
                 label="First Name"
                 value={editFormData.first_name}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    first_name: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -678,7 +788,12 @@ export default function AllStudentsPage() {
                 fullWidth
                 label="Last Name"
                 value={editFormData.last_name}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, last_name: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    last_name: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={12}>
@@ -687,7 +802,12 @@ export default function AllStudentsPage() {
                 label="Email"
                 type="email"
                 value={editFormData.email}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -695,7 +815,12 @@ export default function AllStudentsPage() {
                 fullWidth
                 label="Roll Number"
                 value={editFormData.roll_number}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, roll_number: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    roll_number: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -703,7 +828,12 @@ export default function AllStudentsPage() {
                 fullWidth
                 label="Phone Number"
                 value={editFormData.phone_number}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    phone_number: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -711,7 +841,12 @@ export default function AllStudentsPage() {
                 fullWidth
                 label="Grade"
                 value={editFormData.grade}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, grade: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    grade: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -719,7 +854,12 @@ export default function AllStudentsPage() {
                 fullWidth
                 label="Class"
                 value={editFormData.class_name}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, class_name: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    class_name: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -728,7 +868,12 @@ export default function AllStudentsPage() {
                 label="Date of Birth"
                 type="date"
                 value={editFormData.date_of_birth}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    date_of_birth: e.target.value,
+                  }))
+                }
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
@@ -738,7 +883,12 @@ export default function AllStudentsPage() {
                 label="Admission Date"
                 type="date"
                 value={editFormData.admission_date}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, admission_date: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    admission_date: e.target.value,
+                  }))
+                }
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
@@ -748,14 +898,20 @@ export default function AllStudentsPage() {
                 <Select
                   value={editFormData.assigned_teacher}
                   label="Assigned Teacher"
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, assigned_teacher: e.target.value }))}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      assigned_teacher: e.target.value,
+                    }))
+                  }
                 >
                   <MenuItem value="">
                     <em>No Teacher Assigned</em>
                   </MenuItem>
                   {teachers.map((teacher) => (
                     <MenuItem key={teacher.id} value={teacher.id}>
-                      {teacher.user.first_name} {teacher.user.last_name} - {teacher.subject_specialization}
+                      {teacher.user.first_name} {teacher.user.last_name} -{" "}
+                      {teacher.subject_specialization}
                     </MenuItem>
                   ))}
                 </Select>
@@ -771,13 +927,17 @@ export default function AllStudentsPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete student{' '}
+            Are you sure you want to delete student{" "}
             <strong>
-              {selectedStudent?.user.first_name} {selectedStudent?.user.last_name}
+              {selectedStudent?.user.first_name}{" "}
+              {selectedStudent?.user.last_name}
             </strong>
             ? This action cannot be undone.
           </Typography>
@@ -793,12 +953,12 @@ export default function AllStudentsPage() {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
       >
         <Alert
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbar.message}
         </Alert>
