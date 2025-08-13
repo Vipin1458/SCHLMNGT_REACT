@@ -20,6 +20,7 @@ import StudentResults from "../pages/StudentResults";
 import AttendExam from "../pages/AttendExampage";
 import LoginRedirect from "./LoginRedirect";
 import AnswerSheet from "../components/AnswerSheet";
+import ChatPage from "../components/chatPage";
 
 
 
@@ -91,6 +92,10 @@ const router = createBrowserRouter([
  {
   path: "/dashboard/teacher/exams",
   element: <TeacherExamsPage />
+},
+{
+  path: "/dashboard/messages",
+  element: <ChatPage />
 },
 {
   path: "/dashboard/exams/create",

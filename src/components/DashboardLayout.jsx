@@ -26,7 +26,8 @@ import {
   PersonOutline as ProfileIcon,
   Group as GroupIcon,
   AddBox as AddBoxIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  Chat
 } from "@mui/icons-material";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -98,6 +99,13 @@ export default function DashboardLayout() {
               </ListItemButton>
             </ListItem>
 
+             <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/messages">
+                <ListItemIcon><Chat /></ListItemIcon>
+                <ListItemText primary="Chat" />
+              </ListItemButton>
+            </ListItem>
+
             <ListItem disablePadding>
               <ListItemButton component={Link} to="/dashboard/teacher/exams">
                 <ListItemIcon><CheckCircleIcon /></ListItemIcon>
@@ -129,6 +137,12 @@ export default function DashboardLayout() {
   <ListItemText primary="My results" />
 </ListItemButton>
 
+            </ListItem>
+              <ListItem disablePadding>
+              <ListItemButton component={Link} to="/dashboard/messages">
+                <ListItemIcon><Chat /></ListItemIcon>
+                <ListItemText primary="Chat" />
+              </ListItemButton>
             </ListItem>
 
            

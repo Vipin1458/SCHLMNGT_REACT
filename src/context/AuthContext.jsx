@@ -17,10 +17,11 @@ export const AuthProvider = ({ children }) => {
       : null;
   });
 
-  const login = ({ user, access, refresh }) => {
+  const login = ({ user, access, refresh,id }) => {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("access", access);
     localStorage.setItem("refresh", refresh);
+    localStorage.setItem("id",id)
     setAuth({ user, access, refresh });
   };
 

@@ -28,6 +28,7 @@ export default function LoginForm() {
 
       const access = tokenRes.data.access;
       const refresh = tokenRes.data.refresh;
+      const id =tokenRes.data.id
 
       const user = {
         username: tokenRes.data.username,
@@ -35,7 +36,7 @@ export default function LoginForm() {
       };
 
       
-      login({ user, access, refresh });
+      login({ user, access, refresh,id });
 
       navigate("/dashboard");
     } catch (err) {
