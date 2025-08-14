@@ -157,7 +157,6 @@ export default function DashboardLayout() {
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
 
-      {/* Top Navbar */}
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <IconButton
@@ -184,7 +183,6 @@ export default function DashboardLayout() {
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar (Drawer) */}
       <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }} aria-label="sidebar folders">
         <Drawer
           variant="temporary"
@@ -211,12 +209,11 @@ export default function DashboardLayout() {
         </Drawer>
       </Box>
 
-      {/* Page Content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: 2,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: 8,
         }}

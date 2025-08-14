@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       : null;
   });
 
-  const login = ({ user, access, refresh,id }) => {
+  const login = ({ user, access, refresh,id='' }) => {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("access", access);
     localStorage.setItem("refresh", refresh);
@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
+    localStorage.removeItem("id");
     setAuth(null);
   };
 

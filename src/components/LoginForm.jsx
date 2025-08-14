@@ -36,7 +36,7 @@ export default function LoginForm() {
       };
 
       
-      login({ user, access, refresh,id });
+     id? login({ user, access, refresh,id }):login({ user, access, refresh })
 
       navigate("/dashboard");
     } catch (err) {

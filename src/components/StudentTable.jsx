@@ -18,15 +18,17 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
-  Alert
+  Alert,
 } from "@mui/material";
-import { 
-  Edit as EditIcon, 
+import {
+  Edit as EditIcon,
   Visibility as ViewIcon,
-  Grade as GradeIcon 
+  Grade as GradeIcon,
 } from "@mui/icons-material";
 import StudentEditDialog from "./StudentEditDialog";
 import axiosPrivate from "../api/axiosPrivate";
+import { useNavigate } from "react-router-dom";
+
 
 export default function StudentTable({ students, onStudentUpdate }) {
   const [editStudent, setEditStudent] = useState(null);
@@ -38,6 +40,7 @@ export default function StudentTable({ students, onStudentUpdate }) {
   const [marksLoading, setMarksLoading] = useState(false);
   const [marksError, setMarksError] = useState("");
 
+  const navigate = useNavigate();
   const handleEditClick = (student) => {
     setEditStudent(student);
   };
@@ -51,28 +54,52 @@ export default function StudentTable({ students, onStudentUpdate }) {
     setEditStudent(null);
   };
 
+const handleMessageStudent = async (studentId) => {
+  try {
+    const convRes = await axiosPrivate.get("/chat/api/conversations/");
+    const existingConv = convRes.data.results.find(
+      (c) => c.student_id === studentId
+    );
+
+    let conv;
+    if (existingConv) {
+      conv = existingConv;
+    } else {
+      const teacherId = Number(localStorage.getItem("id"));
+      const createRes = await axiosPrivate.post("/chat/api/conversations/", {
+        teacher_id: teacherId,
+        student_id: studentId,
+      });
+      conv = createRes.data;
+    }
+
+    navigate("/dashboard/messages", { state: { convId: conv.id } });
+  } catch (err) {
+    console.error("Error starting chat:", err);
+  }
+};
+
   const handleViewMarks = async (student) => {
     setSelectedStudent(student);
     setMarksDialogOpen(true);
     setMarksLoading(true);
     setMarksError("");
-    
+
     try {
-      const res = await axiosPrivate.get('/student-exams/');
+      const res = await axiosPrivate.get("/student-exams/");
       const allMarks = res.data.results || res.data;
-      const studentSpecificMarks = allMarks.filter(mark => 
-        mark.student_roll === student.roll_number
+      const studentSpecificMarks = allMarks.filter(
+        (mark) => mark.student_roll === student.roll_number
       );
-      
+
       setStudentMarks(studentSpecificMarks);
     } catch (err) {
-      console.error('Error fetching student marks:', err);
-      setMarksError('Failed to load exam results');
+      console.error("Error fetching student marks:", err);
+      setMarksError("Failed to load exam results");
     } finally {
       setMarksLoading(false);
     }
   };
-
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -105,15 +132,36 @@ export default function StudentTable({ students, onStudentUpdate }) {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Roll Number</strong></TableCell>
-                <TableCell><strong>Class</strong></TableCell>
-                <TableCell><strong>Grade</strong></TableCell>
-                <TableCell><strong>Phone</strong></TableCell>
-                <TableCell><strong>Email</strong></TableCell>
-                <TableCell><strong>Exams Taken</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell><strong>Actions</strong></TableCell>
+                <TableCell>
+                  <strong>Name</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Roll Number</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Class</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Grade</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Phone</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Email</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Exams Taken</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Message</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Actions</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -133,20 +181,28 @@ export default function StudentTable({ students, onStudentUpdate }) {
                       variant="outlined"
                       startIcon={<GradeIcon />}
                       onClick={() => handleViewMarks(student)}
-                      sx={{ minWidth: 'auto' }}
+                      sx={{ minWidth: "auto" }}
                     >
                       View Marks
                     </Button>
                   </TableCell>
                   <TableCell>
+                    <Button
+                      variant="outlined"
+                      onClick={() => handleMessageStudent(student.id)}
+                    >
+                      Message
+                    </Button>
+                  </TableCell>
+                  <TableCell>
                     <Chip
-                      label={student.status === 0 ? "Active" : "Inactive"}
-                      color={student.status === 0 ? "success" : "error"}
+                      label={student.status === 1 ? "Active" : "Inactive"}
+                      color={student.status === 1 ? "success" : "error"}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1 }}>
                       <IconButton
                         onClick={() => handleEditClick(student)}
                         color="primary"
@@ -162,7 +218,7 @@ export default function StudentTable({ students, onStudentUpdate }) {
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, 50]}
           component="div"
@@ -187,19 +243,20 @@ export default function StudentTable({ students, onStudentUpdate }) {
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3 },
         }}
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <GradeIcon color="primary" />
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Exam Results - {selectedStudent?.user?.first_name} {selectedStudent?.user?.last_name}
+            Exam Results - {selectedStudent?.user?.first_name}{" "}
+            {selectedStudent?.user?.last_name}
           </Typography>
         </DialogTitle>
-        
+
         <DialogContent>
           {marksLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress />
             </Box>
           ) : marksError ? (
@@ -209,18 +266,31 @@ export default function StudentTable({ students, onStudentUpdate }) {
           ) : studentMarks.length > 0 ? (
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Roll Number: {selectedStudent?.roll_number} | Class: {selectedStudent?.class_name}
+                Roll Number: {selectedStudent?.roll_number} | Class:{" "}
+                {selectedStudent?.class_name}
               </Typography>
-              
+
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Exam Title</strong></TableCell>
-                    <TableCell><strong>Subject</strong></TableCell>
-                    <TableCell><strong>Marks</strong></TableCell>
-                    <TableCell><strong>Total</strong></TableCell>
-                    <TableCell><strong>Percentage</strong></TableCell>
-                    <TableCell><strong>Date</strong></TableCell>
+                    <TableCell>
+                      <strong>Exam Title</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Subject</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Marks</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Total</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Percentage</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Date</strong>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -231,7 +301,11 @@ export default function StudentTable({ students, onStudentUpdate }) {
                       <TableCell>
                         <Chip
                           label={`${mark.marks}/${mark.total_questions}`}
-                          color={mark.marks >= mark.total_questions * 0.6 ? 'success' : 'error'}
+                          color={
+                            mark.marks >= mark.total_questions * 0.6
+                              ? "success"
+                              : "error"
+                          }
                           size="small"
                         />
                       </TableCell>
@@ -240,11 +314,17 @@ export default function StudentTable({ students, onStudentUpdate }) {
                         <Typography
                           variant="body2"
                           sx={{
-                            color: mark.marks >= mark.total_questions * 0.6 ? 'success.main' : 'error.main',
-                            fontWeight: 600
+                            color:
+                              mark.marks >= mark.total_questions * 0.6
+                                ? "success.main"
+                                : "error.main",
+                            fontWeight: 600,
                           }}
                         >
-                          {((mark.marks / mark.total_questions) * 100).toFixed(1)}%
+                          {((mark.marks / mark.total_questions) * 100).toFixed(
+                            1
+                          )}
+                          %
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -256,8 +336,8 @@ export default function StudentTable({ students, onStudentUpdate }) {
               </Table>
             </Box>
           ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <GradeIcon sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
+            <Box sx={{ textAlign: "center", py: 4 }}>
+              <GradeIcon sx={{ fontSize: 48, color: "#ccc", mb: 2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 No exam results found
               </Typography>
@@ -267,11 +347,9 @@ export default function StudentTable({ students, onStudentUpdate }) {
             </Box>
           )}
         </DialogContent>
-        
+
         <DialogActions>
-          <Button onClick={() => setMarksDialogOpen(false)}>
-            Close
-          </Button>
+          <Button onClick={() => setMarksDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </>
