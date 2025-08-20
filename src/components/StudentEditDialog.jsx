@@ -17,8 +17,7 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
     user: {
       first_name: "",
       last_name: "",
-      email: "",
-      username: "",
+      email: ""
     },
     roll_number: "",
     phone_number: "",
@@ -28,7 +27,8 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
     admission_date: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState({});
+  const [Message,setMessage]=useState("")
 
   useEffect(() => {
     if (student) {
@@ -66,10 +66,37 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
     }
   };
 
+   const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.user.first_name.trim()) newErrors.first_name = "First name is required";
+    if (!formData.user.last_name.trim()) newErrors.last_name = "Last name is required";
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.user.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.user.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+   const phoneRegex = /^[0-9]{10}$/; 
+if (!formData.phone_number.trim()) {
+  newErrors.phone_number = "Phone number is required";
+} else if (!phoneRegex.test(formData.phone_number)) {
+  newErrors.phone_number = "Phone number must be 10 digits";
+}
+    if (!formData.roll_number.trim()) newErrors.roll_number = "Roll number is required";
+    if (!formData.grade.trim()) newErrors.grade = "Grade is required";
+    if (!formData.class_name.trim()) newErrors.class_name = "Class is required";
+
+    setError(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
   e.preventDefault();
+  if (!validateForm()) return;
   setLoading(true);
-  setError("");
+  setMessage("");
 
   
   const payload = {
@@ -90,10 +117,25 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
     const response = await axiosPrivate.patch(`/mystudents/${student.id}/`, payload);
     onUpdate(response.data);
     onClose();
-  } catch (err) {
-    console.error(err);
-    setError(err.response?.data?.detail || "Failed to update student");
-  } finally {
+ } catch (err) {
+  console.error(err.response?.data);
+
+  if (err.response?.data) {
+    const data = err.response.data;
+
+    if (data.detail) {
+      setMessage(data.detail);
+    } 
+    else {
+      const firstErrorKey = Object.keys(data)[0];
+      const firstErrorMsg = data[firstErrorKey][0];
+      setMessage(firstErrorMsg);
+    }
+  } else {
+    setMessage("Failed to update student");
+  }
+}
+finally {
     setLoading(false);
   }
 };
@@ -104,7 +146,7 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
       <DialogTitle>Edit Student</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {Message && <Alert severity="error" sx={{ mb: 2 }}>{Message}</Alert>}
           
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
@@ -113,7 +155,9 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
                 label="First Name"
                 value={formData.user.first_name}
                 onChange={(e) => handleChange("first_name", e.target.value, true)}
-                required
+                error={!!error.first_name}
+                helperText={error.first_name}
+                
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -122,7 +166,9 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
                 label="Last Name"
                 value={formData.user.last_name}
                 onChange={(e) => handleChange("last_name", e.target.value, true)}
-                required
+                  error={!!error.last_name}
+                  helperText={error.last_name}
+                
               />
             </Grid>
            
@@ -133,6 +179,8 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
                 type="email"
                 value={formData.user.email}
                 onChange={(e) => handleChange("email", e.target.value, true)}
+                error={!!error.email}
+                  helperText={error.email}
                 required
               />
             </Grid>
@@ -142,6 +190,8 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
                 label="Roll Number"
                 value={formData.roll_number}
                 onChange={(e) => handleChange("roll_number", e.target.value)}
+                error={!!error.roll_number}
+                  helperText={error.roll_number}
                 required
               />
             </Grid>
@@ -151,6 +201,8 @@ export default function StudentEditDialog({ open, onClose, student, onUpdate }) 
                 label="Phone Number"
                 value={formData.phone_number}
                 onChange={(e) => handleChange("phone_number", e.target.value)}
+                error={!!error.phone_number}
+                  helperText={error.phone_number}
                 required
               />
             </Grid>

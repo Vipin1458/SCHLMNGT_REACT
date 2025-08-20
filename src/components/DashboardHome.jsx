@@ -80,8 +80,8 @@ const AdminHomepage = () => {
       setStudents(studentsData);
       
      
-      const activeStudents = studentsData.filter(student => student.status === 0);
-      const inactiveStudents = studentsData.filter(student => student.status === 1);
+      const activeStudents = studentsData.filter(student => student.status === 1);
+      const inactiveStudents = studentsData.filter(student => student.status === 0);
       
       setStats(prev => ({
         ...prev,

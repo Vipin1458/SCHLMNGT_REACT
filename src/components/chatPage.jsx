@@ -42,45 +42,45 @@ export default function ChatPage() {
     }
   }, [stateConvId, conversations]);
 
-  useEffect(() => {
-    if (!currentUserId) return;
+  // useEffect(() => {
+  //   if (!currentUserId) return;
 
-    const globalSocket = new WebSocket(
-      `ws://127.0.0.1:8000/ws/chat/?token=${accessToken}`
-    );
+  //   const globalSocket = new WebSocket(
+  //     `ws://127.0.0.1:8000/ws/chat/?token=${accessToken}`
+  //   );
 
-    globalSocket.onmessage = async (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === "chat.message") {
-        const msg = data.message;
-        const convId = msg.conversation_id;
+  //   globalSocket.onmessage = async (e) => {
+  //     const data = JSON.parse(e.data);
+  //     if (data.type === "chat.message") {
+  //       const msg = data.message;
+  //       const convId = msg.conversation_id;
 
-        setConversations((prev) => {
-          const idx = prev.findIndex((c) => c.id === convId);
+  //       setConversations((prev) => {
+  //         const idx = prev.findIndex((c) => c.id === convId);
 
-          if (idx !== -1) {
-            const updated = [...prev];
-            updated[idx] = { ...updated[idx], last_message: msg };
-            const [moved] = updated.splice(idx, 1);
-            return [moved, ...updated];
-          } else {
-            axiosPrivate
-              .get(`/chat/api/conversations/${convId}/`)
-              .then((res) => {
-                setConversations((prevInner) => [res.data, ...prevInner]);
-              });
-            return prev;
-          }
-        });
+  //         if (idx !== -1) {
+  //           const updated = [...prev];
+  //           updated[idx] = { ...updated[idx], last_message: msg };
+  //           const [moved] = updated.splice(idx, 1);
+  //           return [moved, ...updated];
+  //         } else {
+  //           axiosPrivate
+  //             .get(`/chat/api/conversations/${convId}/`)
+  //             .then((res) => {
+  //               setConversations((prevInner) => [res.data, ...prevInner]);
+  //             });
+  //           return prev;
+  //         }
+  //       });
 
-        if (selectedConv?.id === convId) {
-          setMessages((prev) => [...prev, msg]);
-        }
-      }
-    };
+  //       if (selectedConv?.id === convId) {
+  //         setMessages((prev) => [...prev, msg]);
+  //       }
+  //     }
+  //   };
 
-    return () => globalSocket.close();
-  }, [currentUserId, selectedConv, accessToken]);
+  //   return () => globalSocket.close();
+  // }, [currentUserId, selectedConv, accessToken]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -196,31 +196,36 @@ export default function ChatPage() {
         <Divider />
         <List>
           {conversations.map((conv) => (
-            <ListItemButton sx={{
-  borderBottom: "1px solid #cec8c8ff",
-  borderRadius: 2,
-  gap:2,
-  paddingLeft:1,
-  "&:hover": {
-    borderColor: "green",
-    backgroundColor: "#f5f5f5",
-  },
-}}
-
+            <ListItemButton
+              sx={{
+                borderBottom: "1px solid #cec8c8ff",
+                borderRadius: 2,
+                gap: 2,
+                paddingLeft: 1,
+                "&:hover": {
+                  borderColor: "green",
+                  backgroundColor: "#f5f5f5",
+                },
+              }}
               key={conv.id}
               selected={selectedConv?.id === conv.id}
               onClick={() => handleSelectConversation(conv)}
             >
-              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40, fontSize: 14 }}>
-                      
-                    </Avatar>
+              <Avatar
+                sx={{ bgcolor: "#1976d2", width: 40, height: 40, fontSize: 14 }}
+              ></Avatar>
               <ListItemText
                 primary={
                   currentUserId === conv.teacher_id
                     ? conv.student_name || conv.student_id
                     : conv.teacher_name || conv.teacher_id
                 }
-                secondary={conv.last_message?.text || "No messages yet"}
+                secondary={
+                  conv.last_message?.text
+                    ? conv.last_message.text.slice(0, 18) +
+                      (conv.last_message.text.length > 10 ? "..." : "")
+                    : "No messages yet"
+                }
               />
             </ListItemButton>
           ))}
@@ -229,33 +234,32 @@ export default function ChatPage() {
 
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         {selectedConv && (
-     <Box
-  sx={{
-    p: 0.5,
-    pl: 2,
-    borderBottom: "1px solid #ddd",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between", 
-    bgcolor: "#fff",
-  }}
->
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    <Avatar sx={{ bgcolor: "#1976d2" }}>
-      {currentUserId === selectedConv.teacher_id
-        ? selectedConv.student_name?.charAt(0)
-        : selectedConv.teacher_name?.charAt(0)}
-    </Avatar>
-    <Typography variant="h6">
-      {currentUserId === selectedConv.teacher_id
-        ? selectedConv.student_name || selectedConv.student_id
-        : selectedConv.teacher_name || selectedConv.teacher_id}
-    </Typography>
-  </Box>
+          <Box
+            sx={{
+              p: 0.5,
+              pl: 2,
+              borderBottom: "1px solid #ddd",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              bgcolor: "#fff",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Avatar sx={{ bgcolor: "#1976d2" }}>
+                {currentUserId === selectedConv.teacher_id
+                  ? selectedConv.student_name?.charAt(0)
+                  : selectedConv.teacher_name?.charAt(0)}
+              </Avatar>
+              <Typography variant="h6">
+                {currentUserId === selectedConv.teacher_id
+                  ? selectedConv.student_name || selectedConv.student_id
+                  : selectedConv.teacher_name || selectedConv.teacher_id}
+              </Typography>
+            </Box>
 
-  <Phone color="green" />
-
-</Box>
+            <Phone color="green" />
+          </Box>
         )}
         <Box
           sx={{ flexGrow: 1, p: 2, overflowY: "auto", background: "#fafafa" }}
@@ -292,7 +296,15 @@ export default function ChatPage() {
                     <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                       {isOwn ? "Me" : ""}
                     </Typography>
-                    <Typography>{msg.text}</Typography>
+                    <Typography
+                      sx={{
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {msg.text}
+                    </Typography>
                   </Paper>
                 </Box>
               );
@@ -300,7 +312,7 @@ export default function ChatPage() {
           ) : (
             <Box
               sx={{
-                paddingTop:40,
+                paddingTop: 40,
                 flexGrow: 1,
                 display: "flex",
                 justifyContent: "center",

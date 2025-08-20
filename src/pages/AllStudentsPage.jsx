@@ -62,6 +62,7 @@ export default function AllStudentsPage() {
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentMarks, setStudentMarks] = useState({});
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -206,10 +207,36 @@ export default function AllStudentsPage() {
     setSelectedStudent(student);
     setDeleteConfirmOpen(true);
   };
+   const validateUpdate =()=>{
+   const newErrors = {};
+
+    if (!editFormData.first_name.trim()) newErrors.first_name = "First name is required";
+    if  (!editFormData.last_name.trim()) newErrors.last_name = "Last name is required";
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!editFormData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(editFormData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+   const phoneRegex = /^[0-9]{10}$/; 
+if (!editFormData.phone_number.trim()) {
+  newErrors.phone_number = "Phone number is required";
+} else if (!phoneRegex.test(editFormData.phone_number)) {
+  newErrors.phone_number = "Phone number must be 10 digits";
+}
+    if (!editFormData.roll_number.trim()) newErrors.roll_number = "Roll number is required";
+    if (!editFormData.grade.trim()) newErrors.grade = "Grade is required";
+    if (!editFormData.class_name.trim()) newErrors.class_name = "Class is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
 
   const handleUpdateStudent = async () => {
     if (!selectedStudent) return;
-
+    if (!validateUpdate()) return;
     try {
       const updateData = {
         user: {
@@ -231,8 +258,17 @@ export default function AllStudentsPage() {
       setEditOpen(false);
       showSnackbar("Student updated successfully", "success");
     } catch (error) {
-      console.error("Error updating student:", error);
-      showSnackbar("Error updating student", "error");
+      console.error("Error updating student:", error.response.data);
+      if (error.response.data){
+       const data=error.response.data
+         const errors = Object.values(data).flat(); 
+         const errorMsg = errors.join("\n");
+        showSnackbar(
+  <span style={{ whiteSpace: "pre-line" }}>{errorMsg}</span>,
+  "error"
+);
+      }
+      else showSnackbar("Error updating student", "error");
     }
   };
 
@@ -398,7 +434,7 @@ export default function AllStudentsPage() {
           <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth>
               <InputLabel>Filter by Class</InputLabel>
-              <Select
+              <Select 
                 value={selectedClass}
                 label="Filter by Class"
                 onChange={(e) => setSelectedClass(e.target.value)}
@@ -485,8 +521,8 @@ export default function AllStudentsPage() {
                   }}
                 >
                   <Chip
-                    label={student.status === 0 ? "Active" : "Inactive"}
-                    color={student.status === 0 ? "success" : "default"}
+                    label={student.status === 1 ? "Active" : "Inactive"}
+                    color={student.status === 1 ? "success" : "default"}
                     size="small"
                   />
                   <Box>
@@ -781,6 +817,8 @@ export default function AllStudentsPage() {
                     first_name: e.target.value,
                   }))
                 }
+                 error={!!errors.first_name}
+                  helperText={errors.first_name}
               />
             </Grid>
             <Grid item xs={6}>
@@ -794,6 +832,8 @@ export default function AllStudentsPage() {
                     last_name: e.target.value,
                   }))
                 }
+                 error={!!errors.last_name}
+                  helperText={errors.last_name}
               />
             </Grid>
             <Grid item xs={12}>
@@ -808,6 +848,8 @@ export default function AllStudentsPage() {
                     email: e.target.value,
                   }))
                 }
+                 error={!!errors.email}
+                  helperText={errors.email}
               />
             </Grid>
             <Grid item xs={6}>
@@ -834,6 +876,8 @@ export default function AllStudentsPage() {
                     phone_number: e.target.value,
                   }))
                 }
+                 error={!!errors.phone_number}
+                  helperText={errors.phone_number}
               />
             </Grid>
             <Grid item xs={6}>

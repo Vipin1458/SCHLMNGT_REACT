@@ -11,9 +11,12 @@ const axiosPrivate = axios.create({
 axiosPrivate.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+     if (!token) {
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+      return Promise.reject("No access token");
     }
+      config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
