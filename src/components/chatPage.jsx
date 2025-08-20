@@ -32,6 +32,8 @@ export default function ChatPage() {
   const currentRole = user?.role || null;
   const location = useLocation();
   const stateConvId = location.state?.convId;
+  const myStatus = location.state?.myStatus;
+  const[active,setActive]=useState(true)
 
   useEffect(() => {
     if (stateConvId && conversations.length > 0) {
@@ -104,6 +106,9 @@ export default function ChatPage() {
           const studentData = profileRes.data;
           const assignedTeacherId = studentData?.assigned_teacher;
           const studentId = studentData?.id;
+          const studentStatus=studentData?.status
+          studentStatus==1?setActive(true):setActive(false)
+          console.log(active);
 
           if (assignedTeacherId && studentId && convRes.data.count === 0) {
             const createRes = await axiosPrivate.post(
@@ -119,7 +124,15 @@ export default function ChatPage() {
               return [createRes.data, ...prev];
             });
           }
-        }
+        }else if (currentRole === "teacher") {
+           const teacherprofile = await axiosPrivate.get('/teacher/me');
+           const status = teacherprofile.data.status;
+          if (status !== undefined && status !== null) {
+    setActive(status === 1);
+  } else {
+    setActive(myStatus === 1);
+  }
+      }
       } catch (err) {
         console.error("Error initializing chat:", err);
       }
@@ -329,15 +342,16 @@ export default function ChatPage() {
 
         <Divider />
         {selectedConv && (
-          <Box sx={{ display: "flex", p: 1 }}>
+          <Box sx={{ display: "flex", p: 1 }} >
             <TextField
               fullWidth
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Type a message..."
+              placeholder={active?"Type a message...":"You are inactive you cannot chat"}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              disabled={!active}
             />
-            <IconButton color="primary" onClick={sendMessage}>
+            <IconButton color="primary" onClick={sendMessage} disabled={!active}>
               <SendIcon />
             </IconButton>
           </Box>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -30,7 +30,7 @@ import axiosPrivate from "../api/axiosPrivate";
 import { useNavigate } from "react-router-dom";
 
 
-export default function StudentTable({ students, onStudentUpdate }) {
+export default function StudentTable({ students, onStudentUpdate,myStatus }) {
   const [editStudent, setEditStudent] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -44,6 +44,10 @@ export default function StudentTable({ students, onStudentUpdate }) {
   const handleEditClick = (student) => {
     setEditStudent(student);
   };
+useEffect(() => {
+ console.log("mystatus",myStatus);
+ 
+}, [])
 
   const handleEditClose = () => {
     setEditStudent(null);
@@ -73,7 +77,7 @@ const handleMessageStudent = async (studentId) => {
       conv = createRes.data;
     }
 
-    navigate("/dashboard/messages", { state: { convId: conv.id } });
+    navigate("/dashboard/messages", { state: { convId: conv.id ,myStatus:myStatus} });
   } catch (err) {
     console.error("Error starting chat:", err);
   }

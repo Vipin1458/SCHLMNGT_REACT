@@ -19,6 +19,7 @@ export default function MyStudentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [status,setStatus]=useState(null)
   const navigate = useNavigate();
 
   const fetchMyStudents = async (showRefreshing = false) => {
@@ -42,8 +43,20 @@ export default function MyStudentsPage() {
     }
   };
 
+   const fetchTeacherProfile = async () => {
+      try {
+        const res = await axiosPrivate.get("/teacher/me");
+        setStatus(res.data.status);
+        console.log("myStatusAsTeacher",res.data.status);
+        
+      } catch (err) {
+        setError("Could not load profile.");
+      } 
+    };
+
   useEffect(() => {
     fetchMyStudents();
+    fetchTeacherProfile()
   }, []);
 
   const handleStudentUpdate = (updatedStudent) => {
@@ -126,6 +139,7 @@ export default function MyStudentsPage() {
             <StudentTable 
               students={myStudents} 
               onStudentUpdate={handleStudentUpdate}
+              myStatus={status}
             />
           ) : (
             <Box sx={{ textAlign: "center", py: 8 }}>
