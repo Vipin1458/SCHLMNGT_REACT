@@ -16,11 +16,14 @@ import ChatIcon from "@mui/icons-material/Chat";
 import axiosPrivate from "../api/axiosPrivate";
 import { useLocation } from "react-router-dom";
 import { Phone } from "lucide-react";
+import InfiniteScroll from "react-infinite-scroll-component";
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState([]);
   const [count, setCount] = useState(0);
   const [selectedConv, setSelectedConv] = useState(null);
+  const [allMessages, setAllMessages] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
   const [messages, setMessages] = useState([]);
   const [socket, setSocket] = useState(null);
   const [text, setText] = useState("");
@@ -32,6 +35,9 @@ export default function ChatPage() {
   const currentRole = user?.role || null;
   const location = useLocation();
   const stateConvId = location.state?.convId;
+  const myStatus = location.state?.myStatus;
+  const [active, setActive] = useState(true);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     if (stateConvId && conversations.length > 0) {
@@ -43,48 +49,8 @@ export default function ChatPage() {
   }, [stateConvId, conversations]);
 
   // useEffect(() => {
-  //   if (!currentUserId) return;
-
-  //   const globalSocket = new WebSocket(
-  //     `ws://127.0.0.1:8000/ws/chat/?token=${accessToken}`
-  //   );
-
-  //   globalSocket.onmessage = async (e) => {
-  //     const data = JSON.parse(e.data);
-  //     if (data.type === "chat.message") {
-  //       const msg = data.message;
-  //       const convId = msg.conversation_id;
-
-  //       setConversations((prev) => {
-  //         const idx = prev.findIndex((c) => c.id === convId);
-
-  //         if (idx !== -1) {
-  //           const updated = [...prev];
-  //           updated[idx] = { ...updated[idx], last_message: msg };
-  //           const [moved] = updated.splice(idx, 1);
-  //           return [moved, ...updated];
-  //         } else {
-  //           axiosPrivate
-  //             .get(`/chat/api/conversations/${convId}/`)
-  //             .then((res) => {
-  //               setConversations((prevInner) => [res.data, ...prevInner]);
-  //             });
-  //           return prev;
-  //         }
-  //       });
-
-  //       if (selectedConv?.id === convId) {
-  //         setMessages((prev) => [...prev, msg]);
-  //       }
-  //     }
-  //   };
-
-  //   return () => globalSocket.close();
-  // }, [currentUserId, selectedConv, accessToken]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [messages]);
 
   useEffect(() => {
     const initChat = async () => {
@@ -104,6 +70,8 @@ export default function ChatPage() {
           const studentData = profileRes.data;
           const assignedTeacherId = studentData?.assigned_teacher;
           const studentId = studentData?.id;
+          const studentStatus = studentData?.status;
+          studentStatus == 1 ? setActive(true) : setActive(false);
 
           if (assignedTeacherId && studentId && convRes.data.count === 0) {
             const createRes = await axiosPrivate.post(
@@ -119,6 +87,14 @@ export default function ChatPage() {
               return [createRes.data, ...prev];
             });
           }
+        } else if (currentRole === "teacher") {
+          const teacherprofile = await axiosPrivate.get("/teacher/me");
+          const status = teacherprofile.data.status;
+          if (status !== undefined && status !== null) {
+            setActive(status === 1);
+          } else {
+            setActive(myStatus === 1);
+          }
         }
       } catch (err) {
         console.error("Error initializing chat:", err);
@@ -128,13 +104,31 @@ export default function ChatPage() {
     initChat();
   }, [currentRole, stateConvId]);
 
+  const loadMore = () => {
+    const currentLength = messages.length;
+    const nextLength = currentLength + PAGE_SIZE;
+
+    if (nextLength >= allMessages.length) {
+      setMessages(allMessages);
+      setHasMore(false);
+    } else {
+      setMessages(allMessages.slice(-nextLength));
+    }
+  };
+
   useEffect(() => {
     if (!selectedConv?.id) return;
 
     axiosPrivate
       .get(`/chat/api/conversations/${selectedConv.id}/messages/`)
       .then((res) => {
-        setMessages(res.data.results || []);
+        const all = res.data.results || [];
+        const sorted = all.sort(
+          (a, b) => new Date(a.created_at) - new Date(b.created_at)
+        );
+        setAllMessages(sorted);
+        setMessages(sorted.slice(-PAGE_SIZE));
+        setHasMore(sorted.length > PAGE_SIZE);
       });
 
     const ws = new WebSocket(
@@ -257,62 +251,80 @@ export default function ChatPage() {
                   : selectedConv.teacher_name || selectedConv.teacher_id}
               </Typography>
             </Box>
-
             <Phone color="green" />
           </Box>
         )}
         <Box
-          sx={{ flexGrow: 1, p: 2, overflowY: "auto", background: "#fafafa" }}
+          id="scrollableDiv"
+          sx={{
+            flexGrow: 1,
+            p: 2,
+            overflowY: "auto",
+            background: "#fafafa",
+            display: "flex",
+            flexDirection: "column-reverse", 
+          }}
         >
           {selectedConv ? (
-            messages.map((msg) => {
-              const isOwn =
-                Number(msg.sender_id) === currentUserId ||
-                Number(msg.sender?.id) === currentUserId;
-              return (
-                <Box
-                  key={msg.id}
-                  sx={{
-                    display: "flex",
-                    justifyContent: isOwn ? "flex-end" : "flex-start",
-                    mb: 1,
-                    gap: 1,
-                  }}
-                >
-                  {!isOwn && (
-                    <Avatar sx={{ bgcolor: "#1976d2" }}>
-                      {msg.sender_name?.charAt(0)}
-                    </Avatar>
-                  )}
-                  <Paper
+           <InfiniteScroll
+  dataLength={messages.length}
+  next={loadMore}
+  hasMore={hasMore}
+  inverse={true} 
+  loader={<Typography sx={{ textAlign: "center" }}>Loading...</Typography>}
+  scrollableTarget="scrollableDiv"
+  style={{ display: "flex", flexDirection: "column-reverse" }}
+>
+  {[...messages].reverse().map((msg) => {
+                const isOwn =
+                  Number(msg.sender_id) === currentUserId ||
+                  Number(msg.sender?.id) === currentUserId;
+                return (
+                  <Box
+                    key={msg.id}
                     sx={{
-                      p: 1.2,
-                      maxWidth: "60%",
-                      bgcolor: isOwn ? "#1976d2" : "#e0e0e0",
-                      color: isOwn ? "#fff" : "#000",
-                      borderRadius: 2,
+                      display: "flex",
+                      justifyContent: isOwn ? "flex-end" : "flex-start",
+                      mb: 1,
+                      gap: 1,
                     }}
                   >
-                    <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                      {isOwn ? "Me" : ""}
-                    </Typography>
-                    <Typography
+                    {!isOwn && (
+                      <Avatar sx={{ bgcolor: "#1976d2" }}>
+                        {msg.sender_name?.charAt(0)}
+                      </Avatar>
+                    )}
+                    <Paper
                       sx={{
-                        wordBreak: "break-word",
-                        overflowWrap: "break-word",
-                        whiteSpace: "pre-wrap",
+                        p: 1.2,
+                        maxWidth: "60%",
+                        bgcolor: isOwn ? "#1976d2" : "#e0e0e0",
+                        color: isOwn ? "#fff" : "#000",
+                        borderRadius: 2,
                       }}
                     >
-                      {msg.text}
-                    </Typography>
-                  </Paper>
-                </Box>
-              );
-            })
+                      <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                        {isOwn ? "Me" : ""}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          wordBreak: "break-word",
+                          overflowWrap: "break-word",
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {msg.text}
+                      </Typography>
+                    </Paper>
+                  </Box>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </InfiniteScroll>
           ) : (
             <Box
               sx={{
-                paddingTop: 40,
+                paddingTop: 20,
                 flexGrow: 1,
                 display: "flex",
                 justifyContent: "center",
@@ -324,7 +336,6 @@ export default function ChatPage() {
               <Typography>Start chatting</Typography>
             </Box>
           )}
-          <div ref={messagesEndRef} />
         </Box>
 
         <Divider />
@@ -334,10 +345,17 @@ export default function ChatPage() {
               fullWidth
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Type a message..."
+              placeholder={
+                active ? "Type a message..." : "You are inactive you cannot chat"
+              }
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              disabled={!active}
             />
-            <IconButton color="primary" onClick={sendMessage}>
+            <IconButton
+              color="primary"
+              onClick={sendMessage}
+              disabled={!active}
+            >
               <SendIcon />
             </IconButton>
           </Box>
