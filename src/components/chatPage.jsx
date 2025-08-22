@@ -189,8 +189,6 @@ export default function ChatPage() {
 
     ws.onclose = () => {
       console.log("Conversation socket closed");
-      toast.error("The user you are trying to reach is not found or has been deleted.");
-      setSelectedConv(null);
     };
 
     return () => ws.close();
