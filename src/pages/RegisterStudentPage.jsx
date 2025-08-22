@@ -513,11 +513,11 @@ export default function RegisterStudentPage() {
                           name="assigned_teacher"
                           control={control}
                           render={({ field }) => (
-                            <Select
+                            <Select 
                               {...field}
                               labelId="teacher-label"
                               label="Assigned Teacher"
-                              sx={{ borderRadius: 2 }}
+                              sx={{ borderRadius: 2,minWidth:170 }}
                             >
                               <MenuItem value="">
                                 <em>Select Teacher</em>
@@ -558,14 +558,15 @@ export default function RegisterStudentPage() {
                   )}
 
                   <Grid item xs={12} sm={6}>
-                    <TextField
+                    <TextField 
                       select
                       fullWidth
                       label="Status"
+                      defaultValue={1} 
                       {...register("status")}
                       error={!!errors.status}
                       helperText={errors.status?.message}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      sx={{minWidth: 100, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     >
                       <MenuItem value={1}>Active</MenuItem>
                       <MenuItem value={0}>Inactive</MenuItem>

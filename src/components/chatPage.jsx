@@ -17,6 +17,7 @@ import axiosPrivate from "../api/axiosPrivate";
 import { useLocation } from "react-router-dom";
 import { Phone } from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
+import toast from "react-hot-toast";
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState([]);
@@ -37,6 +38,7 @@ export default function ChatPage() {
   const stateConvId = location.state?.convId;
   const myStatus = location.state?.myStatus;
   const [active, setActive] = useState(true);
+  const [chatEnabled, setChatEnabled] = useState(true);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -69,9 +71,16 @@ export default function ChatPage() {
           const profileRes = await axiosPrivate.get("/api/student/profile");
           const studentData = profileRes.data;
           const assignedTeacherId = studentData?.assigned_teacher;
+          const Assigned_teacher_status = studentData?.assigned_teacher_status;
           const studentId = studentData?.id;
+          const studentActive = studentData?.status === 1;
+          const teacherActive = Assigned_teacher_status == 1;
           const studentStatus = studentData?.status;
+          console.log("stdactTeacAct",studentActive,teacherActive);
+          console.log("hhuuuuuuuuuuuuuuuuuuuuuuuuuuuu",Assigned_teacher_status);
+          
           studentStatus == 1 ? setActive(true) : setActive(false);
+          setChatEnabled(studentActive && teacherActive);
 
           if (assignedTeacherId && studentId && convRes.data.count === 0) {
             const createRes = await axiosPrivate.post(
@@ -87,15 +96,7 @@ export default function ChatPage() {
               return [createRes.data, ...prev];
             });
           }
-        } else if (currentRole === "teacher") {
-          const teacherprofile = await axiosPrivate.get("/teacher/me");
-          const status = teacherprofile.data.status;
-          if (status !== undefined && status !== null) {
-            setActive(status === 1);
-          } else {
-            setActive(myStatus === 1);
-          }
-        }
+        }  
       } catch (err) {
         console.error("Error initializing chat:", err);
       }
@@ -103,6 +104,29 @@ export default function ChatPage() {
 
     initChat();
   }, [currentRole, stateConvId]);
+
+  useEffect(() => {
+  const fetchStatuses = async () => {
+    if (currentRole !== "teacher" || !selectedConv?.student_id) return;
+
+    try {
+      const teacherProfile = await axiosPrivate.get("/teacher/me");
+      const studentRes = await axiosPrivate.get(
+        `/mystudents/${selectedConv.student_id}`
+      );
+
+      const studentActive = studentRes.data?.status === 1;
+      const teacherActive = teacherProfile.data?.status === 1;
+
+      setActive(teacherActive);
+      setChatEnabled(studentActive && teacherActive);
+    } catch (err) {
+      console.error("Error fetching statuses:", err);
+    }
+  };
+
+  fetchStatuses();
+}, [currentRole, selectedConv]);
 
   const loadMore = () => {
     const currentLength = messages.length;
@@ -129,6 +153,12 @@ export default function ChatPage() {
         setAllMessages(sorted);
         setMessages(sorted.slice(-PAGE_SIZE));
         setHasMore(sorted.length > PAGE_SIZE);
+      })
+      .catch((err) => {
+        if (err.response?.status === 404) {
+          toast.error("The user you are trying to reach is not found.")
+          setSelectedConv(null);
+        }
       });
 
     const ws = new WebSocket(
@@ -159,6 +189,8 @@ export default function ChatPage() {
 
     ws.onclose = () => {
       console.log("Conversation socket closed");
+      toast.error("The user you are trying to reach is not found or has been deleted.");
+      setSelectedConv(null);
     };
 
     return () => ws.close();
@@ -167,11 +199,18 @@ export default function ChatPage() {
   const sendMessage = () => {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       console.warn("Socket is not open");
+      toast.error("Chat connection lost. The user may no longer exist.")
+      setSelectedConv(null)
       return;
     }
     if (text.trim()) {
-      socket.send(JSON.stringify({ text }));
-      setText("");
+      try {
+        socket.send(JSON.stringify({ text }));
+        setText("");
+      } catch (e) {
+        toast.error("he user you are trying to reach is not found.")
+       
+      }
     }
   };
 
@@ -347,17 +386,18 @@ export default function ChatPage() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={
-                active
-                  ? "Type a message..."
-                  : "You are inactive you cannot chat"
+                !active
+                  ? "You are inactive, you cannot chat"
+                  : !chatEnabled
+                  ? "The other user is inactive, you cannot chat"
+                  : "Type a message..."
               }
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              disabled={!active}
+              disabled={!chatEnabled}
             />
             <IconButton
               color="primary"
               onClick={sendMessage}
-              disabled={!active}
+              disabled={!chatEnabled}
             >
               <SendIcon />
             </IconButton>

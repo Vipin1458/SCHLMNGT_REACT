@@ -20,12 +20,14 @@ export default function MyStudentsPage() {
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [status,setStatus]=useState(null)
+  const [studentStatus,setStudentStatus]=useState(null)
   const navigate = useNavigate();
 
   const fetchMyStudents = async (showRefreshing = false) => {
     try {
       if (showRefreshing) setRefreshing(true);
       const res = await axiosPrivate.get("/mystudents/");
+
       
       const studentsData = res.data.results || res.data;
       setMyStudents(Array.isArray(studentsData) ? studentsData : []);
@@ -55,7 +57,7 @@ export default function MyStudentsPage() {
     };
 
   useEffect(() => {
-    fetchMyStudents();
+    fetchMyStudents();      
     fetchTeacherProfile()
   }, []);
 
@@ -140,6 +142,7 @@ export default function MyStudentsPage() {
               students={myStudents} 
               onStudentUpdate={handleStudentUpdate}
               myStatus={status}
+              studentStatus={studentStatus}
             />
           ) : (
             <Box sx={{ textAlign: "center", py: 8 }}>

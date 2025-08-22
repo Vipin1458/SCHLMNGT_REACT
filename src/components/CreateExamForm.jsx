@@ -318,7 +318,7 @@ export default function CreateExamForm() {
                             </InputAdornment>
                           ),
                         }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        sx={{minWidth:120, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       >
                         <MenuItem value="">
                           <em>Select Teacher</em>
@@ -336,12 +336,12 @@ export default function CreateExamForm() {
 
                   {isTeacher && (
                     <Grid item xs={12} sm={6}>
-                      <TextField
+                      <TextField 
                         fullWidth
                         label="Assigned Teacher"
                         value={`${currentUser.full_name || currentUser.username} (You)`}
                         disabled
-                        sx={{ 
+                        sx={{ minWidth:170,
                           '& .MuiOutlinedInput-root': { 
                             borderRadius: 2,
                             backgroundColor: '#f5f5f5'

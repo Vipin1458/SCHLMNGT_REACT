@@ -434,7 +434,7 @@ if (!editFormData.phone_number.trim()) {
           <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth>
               <InputLabel>Filter by Class</InputLabel>
-              <Select 
+              <Select sx={{minWidth:150}}
                 value={selectedClass}
                 label="Filter by Class"
                 onChange={(e) => setSelectedClass(e.target.value)}
@@ -939,7 +939,7 @@ if (!editFormData.phone_number.trim()) {
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <InputLabel>Assigned Teacher</InputLabel>
-                <Select
+                <Select sx={{minWidth:170}}
                   value={editFormData.assigned_teacher}
                   label="Assigned Teacher"
                   onChange={(e) =>
