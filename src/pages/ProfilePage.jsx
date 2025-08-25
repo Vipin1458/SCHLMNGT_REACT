@@ -351,7 +351,7 @@ export default function ProfilePage() {
               />
             </Grid>
             <Grid item xs={12}>
-  <TextField
+  {/* <TextField
     select
     label="Status"
     value={editFormData.status}
@@ -360,7 +360,7 @@ export default function ProfilePage() {
   >
     <MenuItem value={1}>Active</MenuItem>
     <MenuItem value={0}>Inactive</MenuItem>
-  </TextField>
+  </TextField> */}
 </Grid>
 
           </Grid>

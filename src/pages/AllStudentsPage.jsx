@@ -93,6 +93,7 @@ export default function AllStudentsPage() {
     date_of_birth: "",
     admission_date: "",
     assigned_teacher: "",
+    status:"",
   });
 
   const navigate = useNavigate();
@@ -199,6 +200,7 @@ export default function AllStudentsPage() {
       date_of_birth: student.date_of_birth,
       admission_date: student.admission_date,
       assigned_teacher: student.assigned_teacher || "",
+      status:student.status
     });
     setEditOpen(true);
   };
@@ -251,6 +253,7 @@ if (!editFormData.phone_number.trim()) {
         date_of_birth: editFormData.date_of_birth,
         admission_date: editFormData.admission_date,
         assigned_teacher: editFormData.assigned_teacher || null,
+        status:editFormData.status
       };
 
       await axiosPrivate.patch(`/students/${selectedStudent.id}/`, updateData);
@@ -652,10 +655,10 @@ if (!editFormData.phone_number.trim()) {
                       </Typography>
                       <Chip
                         label={
-                          selectedStudent.status === 0 ? "Active" : "Inactive"
+                          selectedStudent.status === 1 ? "Active" : "Inactive"
                         }
                         color={
-                          selectedStudent.status === 0 ? "success" : "default"
+                          selectedStudent.status === 1 ? "success" : "default"
                         }
                         size="small"
                       />
@@ -960,6 +963,19 @@ if (!editFormData.phone_number.trim()) {
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+              <Grid item xs={6}>
+            <TextField
+    select
+    label="Status"
+    value={editFormData.status}
+
+    onChange={(e) => setEditFormData(prev => ({ ...prev, status: parseInt(e.target.value) }))}
+    fullWidth
+  >
+    <MenuItem value={1}>Active</MenuItem>
+    <MenuItem value={0}>Inactive</MenuItem>
+  </TextField>
             </Grid>
           </Grid>
         </DialogContent>

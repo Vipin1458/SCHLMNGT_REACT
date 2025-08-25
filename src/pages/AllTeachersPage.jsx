@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -27,12 +27,10 @@ import {
   Paper,
   Tooltip,
   CircularProgress,
-  Divider
-} from '@mui/material';
-import {
-  DataGrid,
-  GridActionsCellItem
-} from '@mui/x-data-grid';
+  Divider,
+  MenuItem,
+} from "@mui/material";
+import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -43,9 +41,9 @@ import {
   Email as EmailIcon,
   Badge as BadgeIcon,
   Today as TodayIcon,
-  Close as CloseIcon
-} from '@mui/icons-material';
-import axiosPrivate from '../api/axiosPrivate';
+  Close as CloseIcon,
+} from "@mui/icons-material";
+import axiosPrivate from "../api/axiosPrivate";
 
 const TabPanel = ({ children, value, index }) => (
   <div hidden={value !== index}>
@@ -65,42 +63,44 @@ const AllTeachers = () => {
   const [tabValue, setTabValue] = useState(0);
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success'
+    message: "",
+    severity: "success",
   });
- const navigate = useNavigate();
+  const navigate = useNavigate();
   const [editFormData, setEditFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    employee_id: '',
-    phone_number: '',
-    subject_specialization: '',
-    date_of_joining: ''
+    first_name: "",
+    last_name: "",
+    email: "",
+    employee_id: "",
+    phone_number: "",
+    subject_specialization: "",
+    date_of_joining: "",
+    status: "",
   });
 
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const response = await axiosPrivate.get('/teachers/');
+      const response = await axiosPrivate.get("/teachers/");
       setTeachers(response.data.results || response.data);
     } catch (error) {
-      console.error('Error fetching teachers:', error);
-      showSnackbar('Error fetching teachers', 'error');
+      console.error("Error fetching teachers:", error);
+      showSnackbar("Error fetching teachers", "error");
     } finally {
       setLoading(false);
     }
   };
 
-
   const fetchTeacherStudents = async (teacherId) => {
     try {
       setStudentsLoading(true);
-      const response = await axiosPrivate.get(`/teacher-admin/${teacherId}/students/`);
+      const response = await axiosPrivate.get(
+        `/teacher-admin/${teacherId}/students/`
+      );
       setTeacherStudents(response.data);
     } catch (error) {
-      console.error('Error fetching teacher students:', error);
-      showSnackbar('Error fetching students', 'error');
+      console.error("Error fetching teacher students:", error);
+      showSnackbar("Error fetching students", "error");
       setTeacherStudents([]);
     } finally {
       setStudentsLoading(false);
@@ -111,30 +111,30 @@ const AllTeachers = () => {
     setSelectedTeacher(teacher);
     setDetailsOpen(true);
     setTabValue(0);
-    
+
     await fetchTeacherStudents(teacher.id);
   };
-   const handleExport = async () => {
-      try {
-        const res = await axiosPrivate.get("/export/teachers", {
-          responseType: "blob",
-        });
-        const blob = new Blob([res.data], { type: "text/csv" });
-        const url = window.URL.createObjectURL(blob);
-  
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", "teachers.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-  
-        toast.success("Exported Successfully");
-      } catch (err) {
-        toast.error("Failed to export teachers.");
-        console.error(err);
-      }
-    };
+  const handleExport = async () => {
+    try {
+      const res = await axiosPrivate.get("/export/teachers", {
+        responseType: "blob",
+      });
+      const blob = new Blob([res.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "teachers.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Exported Successfully");
+    } catch (err) {
+      toast.error("Failed to export teachers.");
+      console.error(err);
+    }
+  };
   const handleEditClick = (teacher) => {
     setSelectedTeacher(teacher);
     setEditFormData({
@@ -144,7 +144,8 @@ const AllTeachers = () => {
       employee_id: teacher.employee_id,
       phone_number: teacher.phone_number,
       subject_specialization: teacher.subject_specialization,
-      date_of_joining: teacher.date_of_joining
+      date_of_joining: teacher.date_of_joining,
+      status: teacher.status,
     });
     setEditOpen(true);
   };
@@ -154,7 +155,7 @@ const AllTeachers = () => {
     setDeleteOpen(true);
   };
   const handleAddTeacherClick = () => {
-    navigate('/dashboard/teachers/register');
+    navigate("/dashboard/teachers/register");
   };
 
   const handleUpdateTeacher = async () => {
@@ -170,16 +171,17 @@ const AllTeachers = () => {
         employee_id: editFormData.employee_id,
         phone_number: editFormData.phone_number,
         subject_specialization: editFormData.subject_specialization,
-        date_of_joining: editFormData.date_of_joining
+        date_of_joining: editFormData.date_of_joining,
+        status:editFormData.status
       };
 
       await axiosPrivate.patch(`/teachers/${selectedTeacher.id}/`, updateData);
-      showSnackbar('Teacher updated successfully', 'success');
+      showSnackbar("Teacher updated successfully", "success");
       setEditOpen(false);
       fetchTeachers();
     } catch (error) {
-      console.error('Error updating teacher:', error);
-      showSnackbar('Error updating teacher', 'error');
+      console.error("Error updating teacher:", error);
+      showSnackbar("Error updating teacher", "error");
     }
   };
 
@@ -188,13 +190,13 @@ const AllTeachers = () => {
 
     try {
       await axiosPrivate.delete(`/teachers/${selectedTeacher.id}/`);
-      showSnackbar('Teacher deleted successfully', 'success');
+      showSnackbar("Teacher deleted successfully", "success");
       setDeleteOpen(false);
       setDetailsOpen(false);
       fetchTeachers();
     } catch (error) {
-      console.error('Error deleting teacher:', error);
-      showSnackbar('Error deleting teacher', 'error');
+      console.error("Error deleting teacher:", error);
+      showSnackbar("Error deleting teacher", "error");
     }
   };
 
@@ -204,39 +206,39 @@ const AllTeachers = () => {
 
   const columns = [
     {
-      field: 'full_name',
-      headerName: 'Full Name',
+      field: "full_name",
+      headerName: "Full Name",
       width: 180,
-      valueGetter: (value, row) => 
-        `${row.user?.first_name || ''} ${row.user?.last_name || ''}`,
+      valueGetter: (value, row) =>
+        `${row.user?.first_name || ""} ${row.user?.last_name || ""}`,
     },
     {
-      field: 'employee_id',
-      headerName: 'Employee ID',
+      field: "employee_id",
+      headerName: "Employee ID",
       width: 104,
     },
     {
-      field: 'email',
-      headerName: 'Email',
+      field: "email",
+      headerName: "Email",
       width: 200,
-      valueGetter: (value, row) => row.user?.email || '',
+      valueGetter: (value, row) => row.user?.email || "",
     },
     {
-      field: 'subject_specialization',
-      headerName: 'Subject',
+      field: "subject_specialization",
+      headerName: "Subject",
       width: 140,
     },
     {
-      field: 'phone_number',
-      headerName: 'Phone',
+      field: "phone_number",
+      headerName: "Phone",
       width: 140,
     },
     {
-      field: 'date_of_joining',
-      headerName: 'Join Date',
+      field: "date_of_joining",
+      headerName: "Join Date",
       width: 110,
       valueFormatter: (value) => {
-        if (!value) return '';
+        if (!value) return "";
         try {
           return new Date(value).toLocaleDateString();
         } catch {
@@ -245,21 +247,21 @@ const AllTeachers = () => {
       },
     },
     {
-      field: 'status',
-      headerName: 'Status',
+      field: "status",
+      headerName: "Status",
       width: 100,
       renderCell: (params) => (
         <Chip
-          label={params.row?.status === 1 ? 'Active' : 'Inactive'}
-          color={params.row?.status === 1 ? 'success' : 'default'}
+          label={params.row?.status === 1 ? "Active" : "Inactive"}
+          color={params.row?.status === 1 ? "success" : "default"}
           size="small"
         />
       ),
     },
     {
-      field: 'actions',
-      type: 'actions',
-      headerName: 'Actions',
+      field: "actions",
+      type: "actions",
+      headerName: "Actions",
       width: 120,
       getActions: (params) => [
         <GridActionsCellItem
@@ -283,40 +285,40 @@ const AllTeachers = () => {
 
   const studentColumns = [
     {
-      field: 'full_name',
-      headerName: 'Student Name',
+      field: "full_name",
+      headerName: "Student Name",
       width: 200,
-      valueGetter: (value, row) => 
-        `${row.user?.first_name || ''} ${row.user?.last_name || ''}`,
+      valueGetter: (value, row) =>
+        `${row.user?.first_name || ""} ${row.user?.last_name || ""}`,
     },
     {
-      field: 'roll_number',
-      headerName: 'Roll Number',
+      field: "roll_number",
+      headerName: "Roll Number",
       width: 130,
     },
     {
-      field: 'class_name',
-      headerName: 'Class',
+      field: "class_name",
+      headerName: "Class",
       width: 100,
     },
     {
-      field: 'grade',
-      headerName: 'Grade',
+      field: "grade",
+      headerName: "Grade",
       width: 100,
     },
     {
-      field: 'phone_number',
-      headerName: 'Phone',
+      field: "phone_number",
+      headerName: "Phone",
       width: 150,
     },
     {
-      field: 'status',
-      headerName: 'Status',
+      field: "status",
+      headerName: "Status",
       width: 100,
       renderCell: (params) => (
         <Chip
-          label={params.row?.status === 1 ? 'Active' : 'Inactive'}
-          color={params.row?.status === 1 ? 'success' : 'default'}
+          label={params.row?.status === 1 ? "Active" : "Inactive"}
+          color={params.row?.status === 1 ? "success" : "default"}
           size="small"
         />
       ),
@@ -329,7 +331,14 @@ const AllTeachers = () => {
 
   return (
     <Box sx={{ p: 0 }}>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-around",
+          alignItems: "center",
+        }}
+      >
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           All Teachers
         </Typography>
@@ -338,36 +347,38 @@ const AllTeachers = () => {
           onClick={handleAddTeacherClick}
           startIcon={<PersonAddIcon />}
           sx={{
-            bgcolor: '#1976d2',
-            '&:hover': { bgcolor: '#1565c0' },
+            bgcolor: "#1976d2",
+            "&:hover": { bgcolor: "#1565c0" },
             borderRadius: 2,
-            px: 3
+            px: 3,
           }}
         >
           Add New Teacher
         </Button>
         <Button
-                    variant="outlined"
-                    onClick={handleExport}
-                    sx={{ borderRadius: 2, px: 3 }}
-                  >
-                    Export teachers
-                  </Button>
+          variant="outlined"
+          onClick={handleExport}
+          sx={{ borderRadius: 2, px: 3 }}
+        >
+          Export teachers
+        </Button>
       </Box>
 
-      <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(212, 12, 12, 0.1)' }}>
+      <Card
+        sx={{ borderRadius: 3, boxShadow: "0 4px 20px rgba(212, 12, 12, 0.1)" }}
+      >
         <CardContent>
           <Box
-  sx={{
-    height: {
-      xs: 300,  
-      sm: 400,  
-      md: 500, 
-      lg: 600, 
-    },
-    width: '100%',
-  }}
->
+            sx={{
+              height: {
+                xs: 300,
+                sm: 400,
+                md: 500,
+                lg: 600,
+              },
+              width: "100%",
+            }}
+          >
             <DataGrid
               rows={teachers}
               columns={columns}
@@ -378,10 +389,10 @@ const AllTeachers = () => {
               }}
               disableRowSelectionOnClick
               sx={{
-                '& .MuiDataGrid-cell': { fontSize: '0.875rem' },
-                '& .MuiDataGrid-columnHeaders': {
-                  bgcolor: '#f5f5f5',
-                  fontSize: '0.9rem',
+                "& .MuiDataGrid-cell": { fontSize: "0.875rem" },
+                "& .MuiDataGrid-columnHeaders": {
+                  bgcolor: "#f5f5f5",
+                  fontSize: "0.9rem",
                   fontWeight: 600,
                 },
               }}
@@ -396,10 +407,17 @@ const AllTeachers = () => {
         maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3 },
         }}
       >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
+        >
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
             Teacher Details
           </Typography>
@@ -407,14 +425,14 @@ const AllTeachers = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        
+
         <DialogContent sx={{ p: 0 }}>
           {selectedTeacher && (
             <>
               <Tabs
                 value={tabValue}
                 onChange={(_, newValue) => setTabValue(newValue)}
-                sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}
+                sx={{ borderBottom: 1, borderColor: "divider", px: 3 }}
               >
                 <Tab label="Basic Information" />
                 <Tab label={`Students (${teacherStudents.length})`} />
@@ -423,53 +441,76 @@ const AllTeachers = () => {
               <TabPanel value={tabValue} index={0}>
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <BadgeIcon sx={{ mr: 1, color: '#1976d2' }} />
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <BadgeIcon sx={{ mr: 1, color: "#1976d2" }} />
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {selectedTeacher.user.first_name} {selectedTeacher.user.last_name}
+                        {selectedTeacher.user.first_name}{" "}
+                        {selectedTeacher.user.last_name}
                       </Typography>
                     </Box>
-                    
+
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary">Employee ID</Typography>
-                      <Typography variant="body1">{selectedTeacher.employee_id}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Employee ID
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedTeacher.employee_id}
+                      </Typography>
                     </Box>
-                    
+
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary">Username</Typography>
-                      <Typography variant="body1">{selectedTeacher.user.username}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Username
+                      </Typography>
+                      <Typography variant="body1">
+                        {selectedTeacher.user.username}
+                      </Typography>
                     </Box>
-                    
+
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary">Status</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Status
+                      </Typography>
                       <Chip
-                        label={selectedTeacher.status === 1 ? 'Active' : 'Inactive'}
-                        color={selectedTeacher.status === 1 ? 'success' : 'default'}
+                        label={
+                          selectedTeacher.status === 1 ? "Active" : "Inactive"
+                        }
+                        color={
+                          selectedTeacher.status === 1 ? "success" : "default"
+                        }
                         size="small"
                       />
                     </Box>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <EmailIcon sx={{ mr: 1, color: '#1976d2' }} />
-                      <Typography variant="body1">{selectedTeacher.user.email}</Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <PhoneIcon sx={{ mr: 1, color: '#1976d2' }} />
-                      <Typography variant="body1">{selectedTeacher.phone_number}</Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <SchoolIcon sx={{ mr: 1, color: '#1976d2' }} />
-                      <Typography variant="body1">{selectedTeacher.subject_specialization}</Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <TodayIcon sx={{ mr: 1, color: '#1976d2' }} />
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <EmailIcon sx={{ mr: 1, color: "#1976d2" }} />
                       <Typography variant="body1">
-                        {new Date(selectedTeacher.date_of_joining).toLocaleDateString()}
+                        {selectedTeacher.user.email}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <PhoneIcon sx={{ mr: 1, color: "#1976d2" }} />
+                      <Typography variant="body1">
+                        {selectedTeacher.phone_number}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <SchoolIcon sx={{ mr: 1, color: "#1976d2" }} />
+                      <Typography variant="body1">
+                        {selectedTeacher.subject_specialization}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <TodayIcon sx={{ mr: 1, color: "#1976d2" }} />
+                      <Typography variant="body1">
+                        {new Date(
+                          selectedTeacher.date_of_joining
+                        ).toLocaleDateString()}
                       </Typography>
                     </Box>
                   </Grid>
@@ -478,11 +519,13 @@ const AllTeachers = () => {
 
               <TabPanel value={tabValue} index={1}>
                 {studentsLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", py: 4 }}
+                  >
                     <CircularProgress />
                   </Box>
                 ) : teacherStudents.length > 0 ? (
-                  <Box sx={{ height: 400, width: '100%' }}>
+                  <Box sx={{ height: 400, width: "100%" }}>
                     <DataGrid
                       rows={teacherStudents}
                       columns={studentColumns}
@@ -494,8 +537,8 @@ const AllTeachers = () => {
                     />
                   </Box>
                 ) : (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <SchoolIcon sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <SchoolIcon sx={{ fontSize: 48, color: "#ccc", mb: 2 }} />
                     <Typography variant="h6" color="text.secondary">
                       No students assigned to this teacher
                     </Typography>
@@ -505,7 +548,7 @@ const AllTeachers = () => {
             </>
           )}
         </DialogContent>
-        
+
         <DialogActions sx={{ p: 3, pt: 1 }}>
           <Button
             onClick={() => selectedTeacher && handleEditClick(selectedTeacher)}
@@ -516,7 +559,9 @@ const AllTeachers = () => {
             Edit Teacher
           </Button>
           <Button
-            onClick={() => selectedTeacher && handleDeleteClick(selectedTeacher)}
+            onClick={() =>
+              selectedTeacher && handleDeleteClick(selectedTeacher)
+            }
             variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
@@ -526,7 +571,12 @@ const AllTeachers = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit Teacher</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -535,7 +585,12 @@ const AllTeachers = () => {
                 fullWidth
                 label="First Name"
                 value={editFormData.first_name}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    first_name: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -543,7 +598,12 @@ const AllTeachers = () => {
                 fullWidth
                 label="Last Name"
                 value={editFormData.last_name}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, last_name: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    last_name: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={12}>
@@ -552,7 +612,12 @@ const AllTeachers = () => {
                 label="Email"
                 type="email"
                 value={editFormData.email}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -560,7 +625,12 @@ const AllTeachers = () => {
                 fullWidth
                 label="Employee ID"
                 value={editFormData.employee_id}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, employee_id: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    employee_id: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -568,7 +638,12 @@ const AllTeachers = () => {
                 fullWidth
                 label="Phone Number"
                 value={editFormData.phone_number}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    phone_number: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -576,7 +651,12 @@ const AllTeachers = () => {
                 fullWidth
                 label="Subject Specialization"
                 value={editFormData.subject_specialization}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, subject_specialization: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    subject_specialization: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={6}>
@@ -585,9 +665,31 @@ const AllTeachers = () => {
                 label="Date of Joining"
                 type="date"
                 value={editFormData.date_of_joining}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, date_of_joining: e.target.value }))}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    date_of_joining: e.target.value,
+                  }))
+                }
                 InputLabelProps={{ shrink: true }}
               />
+            </Grid>
+            <Grid>
+              <TextField
+                select
+                label="Status"
+                value={editFormData.status}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    status: parseInt(e.target.value),
+                  }))
+                }
+                fullWidth
+              >
+                <MenuItem value={1}>Active</MenuItem>
+                <MenuItem value={0}>Inactive</MenuItem>
+              </TextField>
             </Grid>
           </Grid>
         </DialogContent>
@@ -603,16 +705,21 @@ const AllTeachers = () => {
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete teacher{' '}
+            Are you sure you want to delete teacher{" "}
             <strong>
-              {selectedTeacher?.user.first_name} {selectedTeacher?.user.last_name}
+              {selectedTeacher?.user.first_name}{" "}
+              {selectedTeacher?.user.last_name}
             </strong>
             ? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteTeacher} color="error" variant="contained">
+          <Button
+            onClick={handleDeleteTeacher}
+            color="error"
+            variant="contained"
+          >
             Delete
           </Button>
         </DialogActions>
@@ -621,12 +728,12 @@ const AllTeachers = () => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
       >
         <Alert
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbar.message}
         </Alert>
@@ -636,4 +743,3 @@ const AllTeachers = () => {
 };
 
 export default AllTeachers;
-

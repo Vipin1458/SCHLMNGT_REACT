@@ -23,7 +23,7 @@ export default function ChatPage() {
   const [conversations, setConversations] = useState([]);
   const [count, setCount] = useState(0);
   const [selectedConv, setSelectedConv] = useState(null);
-  const [allMessages, setAllMessages] = useState([]);
+  const [nextpage, setNextPage]= useState(null)
   const [hasMore, setHasMore] = useState(true);
   const [messages, setMessages] = useState([]);
   const [socket, setSocket] = useState(null);
@@ -128,38 +128,47 @@ export default function ChatPage() {
   fetchStatuses();
 }, [currentRole, selectedConv]);
 
-  const loadMore = () => {
-    const currentLength = messages.length;
-    const nextLength = currentLength + PAGE_SIZE;
+ const loadMore = async () => {
+  if (!nextpage) return;
 
-    if (nextLength >= allMessages.length) {
-      setMessages(allMessages);
-      setHasMore(false);
-    } else {
-      setMessages(allMessages.slice(-nextLength));
-    }
-  };
+  try {
+    const res = await axiosPrivate.get(nextpage);
+    const { results, next } = res.data;
+    const older = results.reverse();
+    setMessages((prev) => [...older, ...prev]);
+    setNextPage(next);
+    setHasMore(!!next);
+  } catch (err) {
+    console.error("Error loading more messages:", err);
+    setHasMore(false);
+  }
+};
+
 
   useEffect(() => {
     if (!selectedConv?.id) return;
 
-    axiosPrivate
-      .get(`/chat/api/conversations/${selectedConv.id}/messages/`)
-      .then((res) => {
-        const all = res.data.results || [];
-        const sorted = all.sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at)
-        );
-        setAllMessages(sorted);
-        setMessages(sorted.slice(-PAGE_SIZE));
-        setHasMore(sorted.length > PAGE_SIZE);
-      })
-      .catch((err) => {
-        if (err.response?.status === 404) {
-          toast.error("The user you are trying to reach is not found.")
-          setSelectedConv(null);
-        }
-      });
+    const fetchFirstPage = async () => {
+    try {
+      const res = await axiosPrivate.get(
+        `/chat/api/conversations/${selectedConv.id}/messages/`
+      );
+
+      const { results, next } = res.data;
+     const inv=results.reverse()
+
+      setMessages(inv);
+      setNextPage(next);
+      setHasMore(!!next);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        toast.error("The user you are trying to reach is not found.");
+        setSelectedConv(null);
+      }
+    }
+  };
+
+  fetchFirstPage();
 
     const ws = new WebSocket(
       `ws://127.0.0.1:8000/ws/chat/${selectedConv.id}/?token=${accessToken}`
@@ -295,7 +304,7 @@ export default function ChatPage() {
           id="scrollableDiv"
           sx={{
             flexGrow: 1,
-            p: 2,
+            p:2,
             overflowY: "auto",
             background: "#fafafa",
             display: "flex",
@@ -309,7 +318,7 @@ export default function ChatPage() {
               hasMore={hasMore}
               inverse={true}
               loader={
-                <Typography sx={{ textAlign: "center" }}>Loading...</Typography>
+                <Typography sx={{ textAlign: "center",color:"green" ,mt:4}}>Loading...</Typography>
               }
               scrollableTarget="scrollableDiv"
               style={{ display: "flex", flexDirection: "column-reverse" }}
